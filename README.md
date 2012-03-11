@@ -13,12 +13,65 @@ This is meant to be used in conjuction with multiple sessions of `rtorrent`.
 Documentation
 =============
 
+Gutterd works by having the user specify a set of torrent handlers.
+Handlers handlers inspect the torrent and can be matched against them
+based on several criteria. If a handler matches a given torrent, the
+handler moves the torrent into a watch directory specific to the handler.
+
+Configuration
+-------------
+
+Gutterd uses a json configuration stored in `~/.config/gutterd.json`
+The configuration specifies directories to watch for incoming torrents,
+as well as the handlers to match against those torrents. Here is an
+example configuration.
+
+    {
+        "logPath": "&2",
+        "watch": [ "/Users/b/Downloads" ],
+        "pollFrequency": 60,
+        "handlers": [
+            {
+                "name": "music",
+                "watch": "/Users/b/Music",
+                "match": {
+                    "tracker": "tracker\\.music\\.net",
+                    "ext": "\\.(mp3|m4a|mp4)"
+                }
+            },
+            {
+                "name": "tv",
+                "watch": "/Users/b/Movies",
+                "match": { "tracker": "tracker\\.tv\\.net" }
+            },
+            {
+                "name": "movies",
+                "watch": "/Users/b/Movies",
+                "match": { "tracker": "tracker\\.movies\\.net" }
+            },
+            {
+                "name": "other",
+                "watch": "/Users/b"
+            }
+        ]
+    }
+
+When handler 'match' properties are unspecified, they will match any
+torrent. Torrents are matched against handlers in the order they are
+specified in the config file. So, in the example above, the 'other'
+handler acts as a catch-all and will match all torrents not matched by
+any other handler.
+
 Usage
 -----
 
 Run gutterd with the command
 
-    gutterd [options]
+    gutterd [OPTIONS]
+
+For help with command line options.
+
+    gutterd -h
 
 Prerequisites
 -------------
@@ -30,7 +83,7 @@ Installation
 
 Use goinstall to install gutterd
 
-    goinstall github.com/bmatsuo/gutterd
+    go get github.com/bmatsuo/gutterd
 
 General Documentation
 ---------------------
