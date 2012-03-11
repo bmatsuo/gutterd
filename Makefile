@@ -7,7 +7,7 @@
 
 include $(GOROOT)/src/Make.inc
 
-TARG=github.com/bmatsuo/levyd
+TARG=github.com/bmatsuo/gutterd
 GOFILES=\
         options.go\
         levyd.go\

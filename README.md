@@ -5,7 +5,7 @@
 About levyd
 =============
 
-levyd is the best program for...
+levyd organizes downloaded torrents based on their tracker.
 
 Documentation
 =============
