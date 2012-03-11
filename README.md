@@ -1,11 +1,14 @@
 
 [install go]: http://golang.org/install.html "Install Go"
-[the godoc url]: http://localhost:6060/pkg/github.com/bmatsuo/levyd/ "the Godoc URL"
+[the godoc url]: http://localhost:6060/pkg/github.com/bmatsuo/gutterd/ "the Godoc URL"
 
-About levyd
+About gutterd
 =============
 
-levyd organizes downloaded torrents based on their tracker.
+Gutterd is a deamon process that inspects downloaded .torrent files and
+organizes them into specific directories based on their content. 
+
+This is meant to be used in conjuction with multiple sessions of `rtorrent`.
 
 Documentation
 =============
@@ -13,9 +16,9 @@ Documentation
 Usage
 -----
 
-Run levyd with the command
+Run gutterd with the command
 
-    levyd [options]
+    gutterd [options]
 
 Prerequisites
 -------------
@@ -25,16 +28,16 @@ Prerequisites
 Installation
 -------------
 
-Use goinstall to install levyd
+Use goinstall to install gutterd
 
-    goinstall github.com/bmatsuo/levyd
+    goinstall github.com/bmatsuo/gutterd
 
 General Documentation
 ---------------------
 
-Use godoc to vew the documentation for levyd
+Use godoc to vew the documentation for gutterd
 
-    godoc github.com/bmatsuo/levyd
+    godoc github.com/bmatsuo/gutterd
 
 Or alternatively, use a godoc http server
 
