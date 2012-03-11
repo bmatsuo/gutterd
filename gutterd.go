@@ -52,7 +52,7 @@ func init() {
 		LogPath:       "&2",
 	}
 	// Read the deamon configuration.
-	config, err = LoadConfig("/Users/b/.config/gutterd.json", defconfig)
+	config, err = LoadConfig("/Users/bryan/.config/gutterd.json", defconfig)
 	if err != nil {
 		fmt.Printf("%-8s%s: %v", "ERROR", "Couldn't load configuration", err)
 		os.Exit(1)
@@ -63,6 +63,9 @@ func init() {
 	}
 	if opt.PollFrequency > 0 {
 		config.PollFrequency = opt.PollFrequency
+	}
+	if opt.Watch != nil {
+		config.Watch = opt.Watch
 	}
 
 	// Setup the logging destination.
