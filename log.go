@@ -16,6 +16,44 @@ import (
 	"os"
 )
 
+var loggerMux = new(LoggerMux)
+
+var DefaultLogger = loggerMux.NewSource("gutterd")
+
+func Output(calldepth int, s string) error {
+	return DefaultLogger.Output(calldepth+1, s)
+}
+func Print(v ...interface{})                 { DefaultLogger.Output(4, fmt.Sprint(v...)) }
+func Printf(format string, v ...interface{}) { DefaultLogger.Output(4, fmt.Sprintf(format, v...)) }
+func Println(v ...interface{})               { DefaultLogger.Output(4, fmt.Sprintln(v...)) }
+func Fatal(v ...interface{}) {
+	DefaultLogger.Output(4, fmt.Sprint(v...))
+	os.Exit(1)
+}
+func Fatalf(format string, v ...interface{}) {
+	DefaultLogger.Output(4, fmt.Sprintf(format, v...))
+	os.Exit(1)
+}
+func Fatalln(v ...interface{}) {
+	DefaultLogger.Output(4, fmt.Sprintln(v...))
+	os.Exit(1)
+}
+func Panic(v ...interface{}) {
+	s := fmt.Sprint(v...)
+	DefaultLogger.Output(4, s)
+	panic(s)
+}
+func Panicf(format string, v ...interface{}) {
+	s := fmt.Sprintf(format, v...)
+	DefaultLogger.Output(4, s)
+	panic(s)
+}
+func Panicln(v ...interface{}) {
+	s := fmt.Sprintln(v...)
+	DefaultLogger.Output(4, s)
+	panic(s)
+}
+
 type Logger interface {
 	Fatal(v ...interface{})
 	Fatalf(format string, v ...interface{})
@@ -87,21 +125,21 @@ type sinkLogger struct {
 
 // Implements the Logger interface
 type LoggerMux struct {
-	sources []gLogger
-	sinks   []sinkLogger
+	sources []*gLogger
+	sinks   []*sinkLogger
 }
 
 func (mux *LoggerMux) NewSink(l *log.Logger, names ...string) {
-	mux.sinks = append(mux.sinks, sinkLogger{l, names})
+	mux.sinks = append(mux.sinks, &sinkLogger{l, names})
 }
 
-func (mux *LoggerMux) NewSource(name string) {
+func (mux *LoggerMux) NewSource(name string) Logger {
 	for i := range mux.sources {
 		if mux.sources[i].name == name {
 			panic("duplicate source name")
 		}
 	}
-	mux.sources = append(mux.sources, gLogger{name, func(calldepth int, s string) error {
+	logger := &gLogger{name, func(calldepth int, s string) error {
 		_mux := mux
 		for _, lg := range _mux.sinks {
 			for _, aname := range lg.accepts {
@@ -113,5 +151,7 @@ func (mux *LoggerMux) NewSource(name string) {
 			}
 		}
 		return nil
-	}})
+	}}
+	mux.sources = append(mux.sources, logger)
+	return logger
 }

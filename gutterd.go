@@ -24,7 +24,6 @@ var (
 	config   *Config     // Deamon configuration.
 	watching []string    // Base-level directories to watch for torrents.
 	handlers []*Handler  // The ordered set of torrent handlers.
-	logger   *log.Logger // The global logger.
 	opt      Options     // Command line options.
 )
 
@@ -106,7 +105,7 @@ func init() {
 			os.Exit(0)
 		}
 	}
-	logger = log.New(logfile, "gutterd ", log.LstdFlags)
+	loggerMux.NewSink(log.New(logfile, "", log.LstdFlags), "gutterd")
 
 	handlers = config.MakeHandlers()
 
@@ -120,26 +119,25 @@ func handleFile(path string) {
 		fmt.Printf("Error: %v\n", err)
 		return
 	}
-	logger.Printf("%-8s%s", "TORRENT", torrent.Info.Name)
+	Printf("%-8s%s", "TORRENT", torrent.Info.Name)
 	// Find the first handler matching the supplied torrent.
 	for _, handler := range handlers {
 		if handler.Match(torrent) {
-			logger.Printf("%-8s%-14s", "MATCH", handler.Name)
-			logger.Printf("%-8s%s\n\n", "MOVING", handler.Watch)
+			Printf("%-8s%-14s", "MATCH", handler.Name)
+			Printf("%-8s%s\n\n", "MOVING", handler.Watch)
 			mvpath := filepath.Join(handler.Watch, filepath.Base(path))
 			if err := os.Rename(path, mvpath); err != nil {
-				logger.Printf("%-8s%v", "ERROR", err)
+				Printf("%-8s%v", "ERROR", err)
 			}
 			return
 		}
 	}
-	logger.Printf("%-8s%-14s%s\n\n", "NO MATCH", "", torrent.Info.Name)
+	Printf("%-8s%-14s%s\n\n", "NO MATCH", "", torrent.Info.Name)
 }
 
 func main() {
 	if len(watching) == 0 {
-		logger.Printf("%-8s%s", "ERROR", "Not watching any directories")
-		os.Exit(1)
+		Fatalf("%s\t%s", "ERROR", "Not watching any directories")
 	}
 
 	// Poll watch directories, handling all torrents found.
@@ -147,7 +145,7 @@ func main() {
 		for _, watch := range watching {
 			torrents, err := filepath.Glob(filepath.Join(watch, "*.torrent"))
 			if err != nil {
-				logger.Printf("Error polling %s:\n%v", watch, err)
+				Printf("Error polling %s:\n%v", watch, err)
 				continue
 			}
 			for _, _torrent := range torrents {
