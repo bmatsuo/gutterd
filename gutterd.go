@@ -140,6 +140,10 @@ func main() {
 		Fatal("Not watching any directories")
 	}
 
+	if config.HTTP != "" {
+		ListenAndServe()
+	}
+
 	// Poll watch directories, handling all torrents found.
 	poll(pollFunc(func() (time.Duration, error) {
 		for _, watch := range watching {
@@ -153,6 +157,6 @@ func main() {
 				continue
 			}
 		}
-		return (config.PollFrequency * 1e9), nil
+		return (time.Duration(config.PollFrequency) * time.Second), nil
 	}))
 }

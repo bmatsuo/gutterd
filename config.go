@@ -17,7 +17,6 @@ import (
 	"os"
 	"regexp"
 	"strconv"
-	"time"
 )
 
 type MatcherConfig struct {
@@ -36,7 +35,7 @@ type Config struct {
 	HTTP          string          `json:"http"`          // HTTP service address.
 	LogPath       string          `json:"logPath"`       // Log output path (or FD).
 	Watch         []string        `json:"watch"`         // Incoming watch directories.
-	PollFrequency time.Duration   `json:"pollFrequency"` // Poll frequency in seconds.
+	PollFrequency int64           `json:"pollFrequency"` // Poll frequency in seconds.
 	Handlers      []HandlerConfig `json:"handlers"`      // Ordered set of handlers.
 }
 

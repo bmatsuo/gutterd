@@ -15,7 +15,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
 )
 
 // TODO Customize exported (capitalized) variables, types, and functions.
@@ -28,7 +27,7 @@ var (
 // A struct that holds levyd's parsed command line flags.
 type Options struct {
 	ConfigPath    string
-	PollFrequency time.Duration
+	PollFrequency int64
 	WatchStr      string
 	Watch         []string
 	LogPath       string
