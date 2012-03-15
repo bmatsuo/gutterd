@@ -20,18 +20,20 @@ import (
 )
 
 var (
-	config   *Configuration // Deamon configuration.
-	watching []string       // Base-level directories to watch for torrents.
-	handlers []*Handler     // The ordered set of torrent handlers.
-	logger   *log.Logger    // The global logger.
-	opt      Options        // Command line options.
+	config   *Config     // Deamon configuration.
+	watching []string    // Base-level directories to watch for torrents.
+	handlers []*Handler  // The ordered set of torrent handlers.
+	logger   *log.Logger // The global logger.
+	opt      Options     // Command line options.
 )
 
-// Return to stop poll() from looping.
+// Return from a pollFunc type to stop poll().
 var ErrPollStop = fmt.Errorf("STOP POLLING")
 
+// A function that can be used polling.
 type pollFunc func() (time.Duration, error)
 
+// Repeatedly call fn until ErrPollStop is returned.
 func poll(fn pollFunc) {
 	for {
 		d, err := fn()
@@ -47,7 +49,7 @@ func poll(fn pollFunc) {
 // Read the config file and setup global variables.
 func init() {
 	var err error
-	defconfig := &Configuration{
+	defconfig := &Config{
 		PollFrequency: 60,
 		LogPath:       "&2",
 	}

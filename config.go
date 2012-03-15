@@ -20,28 +20,28 @@ import (
 	"time"
 )
 
-type MatcherConfiguration struct {
-	Tracker  string // Regexp pattern matching tracker urls.
-	Basename string // Regexp pattern matching the (root) file's basename.
-	Ext      string // Regexp pattern matching file extensions.
+type MatcherConfig struct {
+	Tracker  string `json:"tracker"`  // Matched tracker urls.
+	Basename string `json:"basename"` // Matched (root) file basenames.
+	Ext      string `json:"ext"`      // Matched (nested-)file extensions.
 }
 
-type HandlerConfiguration struct {
-	Name  string // The log name for the handler.
-	Watch string // The directory handled torrents are placed in.
-	Match MatcherConfiguration
+type HandlerConfig struct {
+	Name  string        `json:"name"`  // A name for logging purposes.
+	Watch string        `json:"watch"` // Matching .torrent file destination.
+	Match MatcherConfig `json:"match"` // Describes .torrent files to handle.
 }
 
-// The configuration is stored as JSON. Attributes are camelCase.
-type Configuration struct {
-	LogPath       string                 // File path (if any) to direct the log to.
-	Watch         []string               // Directories watched for new torrents to handle.
-	PollFrequency time.Duration          // Delay (seconds) between polling watch directories.
-	Handlers      []HandlerConfiguration // A prioritized list of torrent handlers.
+type Config struct {
+	HTTP          string          `json:"http"`          // HTTP service address.
+	LogPath       string          `json:"logPath"`       // Log output path (or FD).
+	Watch         []string        `json:"watch"`         // Incoming watch directories.
+	PollFrequency time.Duration   `json:"pollFrequency"` // Poll frequency in seconds.
+	Handlers      []HandlerConfig `json:"handlers"`      // Ordered set of handlers.
 }
 
-func LoadConfig(path string, defaults *Configuration) (*Configuration, error) {
-	config := new(Configuration)
+func LoadConfig(path string, defaults *Config) (*Config, error) {
+	config := new(Config)
 	if defaults != nil {
 		*config = *defaults
 	}
@@ -73,7 +73,7 @@ func LoadConfig(path string, defaults *Configuration) (*Configuration, error) {
 	return config, nil
 }
 
-func (c *Configuration) MakeHandlers() []*Handler {
+func (c *Config) MakeHandlers() []*Handler {
 	handlers := make([]*Handler, 0, len(c.Handlers))
 	for _, config := range c.Handlers {
 		mconfig := config.Match
