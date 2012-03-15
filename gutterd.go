@@ -79,14 +79,14 @@ func init() {
 	}
 
 	// Modify config according to command line flags.
-	if opt.LogPath != "" {
-		config.LogPath = opt.LogPath
-	}
 	if opt.PollFrequency > 0 {
 		config.PollFrequency = opt.PollFrequency
 	}
 	if opt.Watch != nil {
 		config.Watch = opt.Watch
+	}
+	if opt.LogPath != "" {
+		config.LogPath = opt.LogPath
 	}
 
 	// Setup the logging destination.
