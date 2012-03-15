@@ -20,12 +20,28 @@ var loggerMux = new(LoggerMux)
 
 var DefaultLogger = loggerMux.NewSource("gutterd")
 
-func Output(calldepth int, s string) error {
-	return DefaultLogger.Output(calldepth+1, s)
-}
-func Print(v ...interface{})                 { DefaultLogger.Output(4, fmt.Sprint(v...)) }
-func Printf(format string, v ...interface{}) { DefaultLogger.Output(4, fmt.Sprintf(format, v...)) }
-func Println(v ...interface{})               { DefaultLogger.Output(4, fmt.Sprintln(v...)) }
+func Output(calldepth int, s string) error      { return DefaultLogger.Output(calldepth+1, s) }
+func Debug(v ...interface{})                    { DefaultLogger.Output(4, fmt.Sprintf("DEBUG\t", fmt.Sprint(v...))) }
+func Debugf(format string, v ...interface{})    { DefaultLogger.Output(4, fmt.Sprintf(format, v...)) }
+func Debugln(v ...interface{})                  { DefaultLogger.Output(4, fmt.Sprintln(v...)) }
+func Info(v ...interface{})                     { DefaultLogger.Output(4, fmt.Sprintf("INFO\t", fmt.Sprint(v...))) }
+func Infof(format string, v ...interface{})     { DefaultLogger.Output(4, fmt.Sprintf(format, v...)) }
+func Infoln(v ...interface{})                   { DefaultLogger.Output(4, fmt.Sprintln(v...)) }
+func Notice(v ...interface{})                   { DefaultLogger.Output(4, fmt.Sprintf("NOTICE\t", fmt.Sprint(v...))) }
+func Noticef(format string, v ...interface{})   { DefaultLogger.Output(4, fmt.Sprintf(format, v...)) }
+func Noticeln(v ...interface{})                 { DefaultLogger.Output(4, fmt.Sprintln(v...)) }
+func Warn(v ...interface{})                     { DefaultLogger.Output(4, fmt.Sprintf("WARN\t", fmt.Sprint(v...))) }
+func Warnf(format string, v ...interface{})     { DefaultLogger.Output(4, fmt.Sprintf(format, v...)) }
+func Warnln(v ...interface{})                   { DefaultLogger.Output(4, fmt.Sprintln(v...)) }
+func Error(v ...interface{})                    { DefaultLogger.Output(4, fmt.Sprintf("ERROR\t", fmt.Sprint(v...))) }
+func Errorf(format string, v ...interface{})    { DefaultLogger.Output(4, fmt.Sprintf(format, v...)) }
+func Errorln(v ...interface{})                  { DefaultLogger.Output(4, fmt.Sprintln(v...)) }
+func Critical(v ...interface{})                 { DefaultLogger.Output(4, fmt.Sprintf("CRITICAL\t", fmt.Sprint(v...))) }
+func Criticalf(format string, v ...interface{}) { DefaultLogger.Output(4, fmt.Sprintf(format, v...)) }
+func Criticalln(v ...interface{})               { DefaultLogger.Output(4, fmt.Sprintln(v...)) }
+func Print(v ...interface{})                    { DefaultLogger.Output(4, fmt.Sprint(v...)) }
+func Printf(format string, v ...interface{})    { DefaultLogger.Output(4, fmt.Sprintf(format, v...)) }
+func Println(v ...interface{})                  { DefaultLogger.Output(4, fmt.Sprintln(v...)) }
 func Fatal(v ...interface{}) {
 	DefaultLogger.Output(4, fmt.Sprint(v...))
 	os.Exit(1)
