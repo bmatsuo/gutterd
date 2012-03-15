@@ -16,9 +16,8 @@ import (
 	"os"
 )
 
-var loggerMux = new(LoggerMux)
-
-var DefaultLogger = loggerMux.NewSource("gutterd")
+var loggerMux *LoggerMux
+var DefaultLogger Logger
 
 func Output(calldepth int, s string) error      { return DefaultLogger.Output(calldepth+1, s) }
 func Debug(v ...interface{})                    { DefaultLogger.Output(4, fmt.Sprint("DEBUG\t", fmt.Sprint(v...))) }
@@ -43,30 +42,30 @@ func Print(v ...interface{})                    { DefaultLogger.Output(4, fmt.Sp
 func Printf(format string, v ...interface{})    { DefaultLogger.Output(4, fmt.Sprintf(format, v...)) }
 func Println(v ...interface{})                  { DefaultLogger.Output(4, fmt.Sprintln(v...)) }
 func Fatal(v ...interface{}) {
-	DefaultLogger.Output(4, fmt.Sprint(v...))
+	DefaultLogger.Output(4, fmt.Sprint("FATAL\t", fmt.Sprint(v...)))
 	os.Exit(1)
 }
 func Fatalf(format string, v ...interface{}) {
-	DefaultLogger.Output(4, fmt.Sprintf(format, v...))
+	DefaultLogger.Output(4, fmt.Sprint("FATAL\t", fmt.Sprintf(format, v...)))
 	os.Exit(1)
 }
 func Fatalln(v ...interface{}) {
-	DefaultLogger.Output(4, fmt.Sprintln(v...))
+	DefaultLogger.Output(4, fmt.Sprint("FATAL\t", fmt.Sprintln(v...)))
 	os.Exit(1)
 }
 func Panic(v ...interface{}) {
 	s := fmt.Sprint(v...)
-	DefaultLogger.Output(4, s)
+	DefaultLogger.Output(4, fmt.Sprint("PANIC\t", s))
 	panic(s)
 }
 func Panicf(format string, v ...interface{}) {
 	s := fmt.Sprintf(format, v...)
-	DefaultLogger.Output(4, s)
+	DefaultLogger.Output(4, fmt.Sprint("PANIC\t", s))
 	panic(s)
 }
 func Panicln(v ...interface{}) {
 	s := fmt.Sprintln(v...)
-	DefaultLogger.Output(4, s)
+	DefaultLogger.Output(4, fmt.Sprint("PANIC\t", s))
 	panic(s)
 }
 
@@ -124,30 +123,30 @@ func (l *gLogger) Print(v ...interface{})                    { l.Output(4, fmt.S
 func (l *gLogger) Printf(format string, v ...interface{})    { l.Output(4, fmt.Sprintf(format, v...)) }
 func (l *gLogger) Println(v ...interface{})                  { l.Output(4, fmt.Sprintln(v...)) }
 func (l *gLogger) Fatal(v ...interface{}) {
-	l.Output(4, fmt.Sprint(v...))
+	l.Output(4, fmt.Sprint("FATAL\t", fmt.Sprint(v...)))
 	os.Exit(1)
 }
 func (l *gLogger) Fatalf(format string, v ...interface{}) {
-	l.Output(4, fmt.Sprintf(format, v...))
+	l.Output(4, fmt.Sprint("FATAL\t", fmt.Sprintf(format, v...)))
 	os.Exit(1)
 }
 func (l *gLogger) Fatalln(v ...interface{}) {
-	l.Output(4, fmt.Sprintln(v...))
+	l.Output(4, fmt.Sprint("FATAL\t", fmt.Sprintln(v...)))
 	os.Exit(1)
 }
 func (l *gLogger) Panic(v ...interface{}) {
 	s := fmt.Sprint(v...)
-	l.Output(4, s)
+	l.Output(4, fmt.Sprint("PANIC\t", s))
 	panic(s)
 }
 func (l *gLogger) Panicf(format string, v ...interface{}) {
 	s := fmt.Sprintf(format, v...)
-	l.Output(4, s)
+	l.Output(4, fmt.Sprint("PANIC\t", s))
 	panic(s)
 }
 func (l *gLogger) Panicln(v ...interface{}) {
 	s := fmt.Sprintln(v...)
-	l.Output(4, s)
+	l.Output(4, fmt.Sprint("PANIC\t", s))
 	panic(s)
 }
 
@@ -164,7 +163,20 @@ type LoggerMux struct {
 }
 
 func (mux *LoggerMux) NewSink(l *log.Logger, names ...string) {
+	if len(names) == 0 {
+		panic("sink accepts no sources")
+	}
 	mux.sinks = append(mux.sinks, &sinkLogger{l, names})
+}
+
+func (mux *LoggerMux) RemoveSink(l *log.Logger) {
+	for i, s := range mux.sinks {
+		if s.Logger == l {
+			mux.sinks = append(append(make([]*sinkLogger, 0, len(mux.sinks)-1),
+				mux.sinks[:i]...),
+				mux.sinks[i+1:]...)
+		}
+	}
 }
 
 func (mux *LoggerMux) NewSource(name string) Logger {
@@ -188,4 +200,15 @@ func (mux *LoggerMux) NewSource(name string) Logger {
 	}}
 	mux.sources = append(mux.sources, logger)
 	return logger
+}
+
+func (mux *LoggerMux) RemoveSource(name string) {
+	for i, s := range mux.sources {
+		if s.name == name {
+			mux.sources = append(append(make([]*gLogger, 0, len(mux.sources)-1),
+				mux.sources[:i]...),
+				mux.sources[i+1:]...)
+		}
+	}
+	// Don't remove the source from the sinks' "accepts" lists.
 }

@@ -56,40 +56,45 @@ func HomeDirectory() (home string, err error) {
 // Read the config file and setup global variables.
 func init() {
 	var err error
-	var config *Config
 	defconfig := &Config{
 		PollFrequency: 60,
 		LogPath:       "&2",
 	}
+
+	loggerMux = new(LoggerMux)
+	DefaultLogger = loggerMux.NewSource("gutterd")
+	initLogger := log.New(os.Stderr, "", 0)
+	loggerMux.NewSink(initLogger, "gutterd")
 
 	opt = parseFlags()
 
 	// Read the deamon configuration.
 	if opt.ConfigPath != "" {
 		if config, err = LoadConfig(opt.ConfigPath, defconfig); err != nil {
-			fmt.Printf("gutterd\tERROR\t%s: %v", "Couldn't load configuration", err)
-			os.Exit(1)
+			Fatalf("%s: %v", "Couldn't load configuration", err)
 		}
 	} else if home, err := HomeDirectory(); err != nil {
-		fmt.Printf("gutterd\tERROR\t%v", err)
-		os.Exit(1)
+		Fatal(err)
 	} else if config, err = LoadConfig(home+"/.config/gutterd.json", defconfig); err != nil {
-		fmt.Printf("gutterd\tERROR\t%s: %v", "Couldn't load configuration", err)
-		os.Exit(1)
+		Fatalf("%s: %v", "Couldn't load configuration", err)
 	}
 
-	// Modify config according to command line flags.
+	handlers = config.MakeHandlers()
+
+	watching = config.Watch
+
 	if opt.PollFrequency > 0 {
 		config.PollFrequency = opt.PollFrequency
 	}
+
 	if opt.Watch != nil {
 		config.Watch = opt.Watch
 	}
+
+	// Setup the logging destination.
 	if opt.LogPath != "" {
 		config.LogPath = opt.LogPath
 	}
-
-	// Setup the logging destination.
 	var logfile io.Writer
 	switch config.LogPath {
 	case "":
@@ -101,15 +106,11 @@ func init() {
 	default:
 		logfile, err = os.OpenFile(config.LogPath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Couldn't open log file %s", config.LogPath)
-			os.Exit(0)
+			Fatalf("Couldn't open log file: %s", config.LogPath)
 		}
 	}
 	loggerMux.NewSink(log.New(logfile, "", log.LstdFlags), "gutterd")
-
-	handlers = config.MakeHandlers()
-
-	watching = config.Watch
+	loggerMux.RemoveSink(initLogger)
 }
 
 // Handle a .torrent file.
