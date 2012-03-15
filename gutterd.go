@@ -61,7 +61,9 @@ func init() {
 		PollFrequency: 60,
 		LogPath:       "&2",
 	}
+
 	opt = parseFlags()
+
 	// Read the deamon configuration.
 	if opt.ConfigPath != "" {
 		if config, err = LoadConfig(home+"/.config/gutterd.json", defconfig); err != nil {
@@ -75,6 +77,8 @@ func init() {
 		fmt.Printf("%-8s%s: %v", "ERROR", "Couldn't load configuration", err)
 		os.Exit(1)
 	}
+
+	// Modify config according to command line flags.
 	if opt.LogPath != "" {
 		config.LogPath = opt.LogPath
 	}
