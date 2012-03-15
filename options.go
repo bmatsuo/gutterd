@@ -27,6 +27,7 @@ var (
 
 // A struct that holds levyd's parsed command line flags.
 type Options struct {
+	ConfigPath    string
 	PollFrequency time.Duration
 	WatchStr      string
 	Watch         []string
@@ -39,6 +40,7 @@ func setupFlags(opt *Options) *flag.FlagSet {
 	fs := flag.NewFlagSet("levyd", flag.ExitOnError)
 	fs.Int64Var((*int64)(&opt.PollFrequency), "poll", 0, "Specify a polling frequency (in seconds).")
 	fs.StringVar(&opt.WatchStr, "watch", "", "Specify a set of directories to watch.")
+	fs.StringVar(&opt.ConfigPath, "config", "", "A config file to use instead of ~/.config/gutterd.json.")
 	fs.StringVar(&opt.LogPath, "log", "", "Specify a log output path.")
 	fs.BoolVar(&opt.Verbose, "v", false, "Verbose program output.")
 	return setupUsage(fs)

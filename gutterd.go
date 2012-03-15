@@ -11,6 +11,7 @@ package main
  */
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -46,20 +47,34 @@ func poll(fn pollFunc) {
 	}
 }
 
+func HomeDirectory() (home string, err error) {
+	if home = os.Getenv("HOME"); home == "" {
+		err = errors.New("Environment variable HOME not set.")
+	}
+	return
+}
+
 // Read the config file and setup global variables.
 func init() {
-	var err error
+	var config *Config
 	defconfig := &Config{
 		PollFrequency: 60,
 		LogPath:       "&2",
 	}
+	opt = parseFlags()
 	// Read the deamon configuration.
-	config, err = LoadConfig("/Users/bryan/.config/gutterd.json", defconfig)
-	if err != nil {
+	if opt.ConfigPath != "" {
+		if config, err = LoadConfig(home+"/.config/gutterd.json", defconfig); err != nil {
+			fmt.Printf("%-8s%s: %v", "ERROR", "Couldn't load configuration", err)
+			os.Exit(1)
+		}
+	} else if home, err := HomeDirectory(); err != nil {
+		fmt.Printf("%-8s%s: %v", "ERROR", "", err)
+		os.Exit(1)
+	} else if config, err = LoadConfig(home+"/.config/gutterd.json", defconfig); err != nil {
 		fmt.Printf("%-8s%s: %v", "ERROR", "Couldn't load configuration", err)
 		os.Exit(1)
 	}
-	opt = parseFlags()
 	if opt.LogPath != "" {
 		config.LogPath = opt.LogPath
 	}
@@ -72,6 +87,7 @@ func init() {
 
 	// Setup the logging destination.
 	var logfile io.Writer
+	var err error
 	switch config.LogPath {
 	case "":
 		fallthrough
