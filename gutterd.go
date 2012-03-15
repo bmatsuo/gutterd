@@ -21,10 +21,10 @@ import (
 )
 
 var (
-	config   *Config     // Deamon configuration.
-	watching []string    // Base-level directories to watch for torrents.
-	handlers []*Handler  // The ordered set of torrent handlers.
-	opt      Options     // Command line options.
+	config   *Config    // Deamon configuration.
+	watching []string   // Base-level directories to watch for torrents.
+	handlers []*Handler // The ordered set of torrent handlers.
+	opt      Options    // Command line options.
 )
 
 // Return from a pollFunc type to stop poll().
@@ -55,6 +55,7 @@ func HomeDirectory() (home string, err error) {
 
 // Read the config file and setup global variables.
 func init() {
+	var err error
 	var config *Config
 	defconfig := &Config{
 		PollFrequency: 60,
@@ -65,15 +66,15 @@ func init() {
 
 	// Read the deamon configuration.
 	if opt.ConfigPath != "" {
-		if config, err = LoadConfig(home+"/.config/gutterd.json", defconfig); err != nil {
-			fmt.Printf("%-8s%s: %v", "ERROR", "Couldn't load configuration", err)
+		if config, err = LoadConfig(opt.ConfigPath, defconfig); err != nil {
+			fmt.Printf("gutterd\tERROR\t%s: %v", "Couldn't load configuration", err)
 			os.Exit(1)
 		}
 	} else if home, err := HomeDirectory(); err != nil {
-		fmt.Printf("%-8s%s: %v", "ERROR", "", err)
+		fmt.Printf("gutterd\tERROR\t%v", err)
 		os.Exit(1)
 	} else if config, err = LoadConfig(home+"/.config/gutterd.json", defconfig); err != nil {
-		fmt.Printf("%-8s%s: %v", "ERROR", "Couldn't load configuration", err)
+		fmt.Printf("gutterd\tERROR\t%s: %v", "Couldn't load configuration", err)
 		os.Exit(1)
 	}
 
@@ -90,7 +91,6 @@ func init() {
 
 	// Setup the logging destination.
 	var logfile io.Writer
-	var err error
 	switch config.LogPath {
 	case "":
 		fallthrough
