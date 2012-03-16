@@ -35,14 +35,15 @@ type pollFunc func() (time.Duration, error)
 
 // Repeatedly call fn until ErrPollStop is returned.
 func poll(fn pollFunc) {
-	for {
-		d, err := fn()
-		if err == ErrPollStop {
-			break
-		} else if err != nil {
-			fmt.Printf("Error: %v\n", err)
+	for cont := true; cont; {
+		switch d, err := fn(); err {
+		case nil:
+			time.Sleep(d)
+		case ErrPollStop:
+			cont = false
+		default:
+			Error(err)
 		}
-		time.Sleep(d)
 	}
 }
 
@@ -71,12 +72,12 @@ func init() {
 	// Read the deamon configuration.
 	if opt.ConfigPath != "" {
 		if config, err = LoadConfig(opt.ConfigPath, defconfig); err != nil {
-			Fatalf("%s: %v", "Couldn't load configuration", err)
+			Fatal("Couldn't load configuration: ", err)
 		}
 	} else if home, err := HomeDirectory(); err != nil {
 		Fatal(err)
 	} else if config, err = LoadConfig(home+"/.config/gutterd.json", defconfig); err != nil {
-		Fatalf("%s: %v", "Couldn't load configuration", err)
+		Fatal("Couldn't load configuration: ", err)
 	}
 
 	handlers = config.MakeHandlers()
@@ -117,28 +118,26 @@ func init() {
 func handleFile(path string) {
 	torrent, err := ReadMetadataFile(path)
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
+		Error(err)
 		return
 	}
-	Printf("%-8s%s", "TORRENT", torrent.Info.Name)
 	// Find the first handler matching the supplied torrent.
 	for _, handler := range handlers {
 		if handler.Match(torrent) {
-			Printf("%-8s%-14s", "MATCH", handler.Name)
-			Printf("%-8s%s\n\n", "MOVING", handler.Watch)
+			Printf("MATCH\t%s\t%s\t%s", torrent.Info.Name, handler.Name, handler.Watch)
 			mvpath := filepath.Join(handler.Watch, filepath.Base(path))
 			if err := os.Rename(path, mvpath); err != nil {
-				Printf("%-8s%v", "ERROR", err)
+				Error(err)
 			}
 			return
 		}
 	}
-	Printf("%-8s%-14s%s\n\n", "NO MATCH", "", torrent.Info.Name)
+	Print("NO MATCH\t", torrent.Info.Name)
 }
 
 func main() {
 	if len(watching) == 0 {
-		Fatalf("%s\t%s", "ERROR", "Not watching any directories")
+		Fatal("Not watching any directories")
 	}
 
 	// Poll watch directories, handling all torrents found.
@@ -146,7 +145,7 @@ func main() {
 		for _, watch := range watching {
 			torrents, err := filepath.Glob(filepath.Join(watch, "*.torrent"))
 			if err != nil {
-				Printf("Error polling %s:\n%v", watch, err)
+				Error(err)
 				continue
 			}
 			for _, _torrent := range torrents {
