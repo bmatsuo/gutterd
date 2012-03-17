@@ -56,12 +56,6 @@ func HomeDirectory() (home string, err error) {
 
 // Read the config file and setup global variables.
 func init() {
-	var err error
-	defconfig := &Config{
-		PollFrequency: 60,
-		LogPath:       "&2",
-	}
-
 	loggerMux = new(LoggerMux)
 	DefaultLogger = loggerMux.NewSource("gutterd")
 	initLogger := log.New(os.Stderr, "", 0)
@@ -70,6 +64,11 @@ func init() {
 	opt = parseFlags()
 
 	// Read the deamon configuration.
+	var err error
+	defconfig := &Config{
+		PollFrequency: 60,
+		LogPath:       "&2",
+	}
 	if opt.ConfigPath != "" {
 		if config, err = LoadConfig(opt.ConfigPath, defconfig); err != nil {
 			Fatal("Couldn't load configuration: ", err)
@@ -92,6 +91,13 @@ func init() {
 		config.Watch = opt.Watch
 	}
 
+	if opt.HTTP != "" {
+		config.HTTP = opt.HTTP
+	}
+	if config.HTTP != "" {
+		_initHTTP()
+	}
+
 	// Setup the logging destination.
 	if opt.LogPath != "" {
 		config.LogPath = opt.LogPath
@@ -110,7 +116,8 @@ func init() {
 			Fatalf("Couldn't open log file: %s", config.LogPath)
 		}
 	}
-	loggerMux.NewSink(log.New(logfile, "", log.LstdFlags), "gutterd")
+
+	loggerMux.NewSink(log.New(logfile, "", log.LstdFlags), "gutterd", "http")
 	loggerMux.RemoveSink(initLogger)
 }
 

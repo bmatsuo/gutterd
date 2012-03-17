@@ -14,9 +14,9 @@ import (
 	"code.google.com/p/gorilla/mux"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"net/http"
 	"strings"
-	"html/template"
 )
 
 type HTTPFormat uint
@@ -26,6 +26,15 @@ const (
 	Hjson
 	Hinvalid
 )
+
+var httpLogger Logger
+
+func _initHTTP() {
+	if loggerMux == nil {
+		panic("nil mux")
+	}
+	httpLogger = loggerMux.NewSource("http")
+}
 
 func HTTPRequestFormat(r *http.Request) HTTPFormat {
 	if format := mux.Vars(r)["format"]; format != "" {
@@ -290,7 +299,7 @@ func ListenAndServe() {
 	router.HandleFunc(`/config{format:(\.(json|html))?}`, ConfigControllerShow).
 		Methods("GET")
 	http.ListenAndServe(config.HTTP, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logger.Printf("HTTP %v %v", r.Method, r.URL.Path)
+		httpLogger.Infof("Request\t%v\t%v", r.Method, r.URL.Path)
 		router.ServeHTTP(w, r)
 	}))
 }
