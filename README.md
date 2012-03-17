@@ -97,7 +97,6 @@ Or alternatively, use a godoc http server
 
 and visit [the Godoc URL][]
 
-
 Author
 ======
 
