@@ -60,3 +60,5 @@ type Handler struct {
 	Watch    string // Destination for .torrent files (watched by a client).
 	*matcher        // Acts as a matcher.
 }
+
+func (h *Handler) String() string { return h.Name }

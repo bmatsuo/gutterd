@@ -251,14 +251,78 @@ func HandlerControllerInsert(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandlerControllerDelete(w http.ResponseWriter, r *http.Request) {
+	h := mux.Vars(r)["handler"]
+	hIndex := -1
+	for i := range config.Handlers {
+		if h == config.Handlers[i].Name {
+			hIndex = i
+			break
+		}
+	}
+
+	if hIndex < 0 {
+		http.Redirect(w, r, "/config", http.StatusNotFound)
+	}
+	if hIndex >= len(config.Handlers)+1 {
+		http.Redirect(w, r, "/config", http.StatusNotFound)
+	}
+
+	handlers = append(handlers[:hIndex], handlers[hIndex+1:]...)
+	config.Handlers = append(config.Handlers[:hIndex], config.Handlers[hIndex+1:]...)
+
+	Info("Deleted handler: ", h)
+
 	http.Redirect(w, r, "/config", http.StatusFound)
 }
 
 func HandlerControllerUp(w http.ResponseWriter, r *http.Request) {
+	h := mux.Vars(r)["handler"]
+	hIndex := -1
+	for i := range config.Handlers {
+		if h == config.Handlers[i].Name {
+			hIndex = i
+			break
+		}
+	}
+
+	if hIndex < 1 {
+		http.Redirect(w, r, "/config", http.StatusNotFound)
+	}
+
+	handlers[hIndex-1], handlers[hIndex] = handlers[hIndex], handlers[hIndex-1]
+	config.Handlers[hIndex-1], config.Handlers[hIndex] = config.Handlers[hIndex], config.Handlers[hIndex-1]
+
+	handlerNames := make([]string, len(config.Handlers))
+	for i := range config.Handlers {
+		handlerNames[i] = config.Handlers[i].Name
+	}
+	Info("New handler order: ", handlerNames)
+
 	http.Redirect(w, r, "/config", http.StatusFound)
 }
 
 func HandlerControllerDown(w http.ResponseWriter, r *http.Request) {
+	h := mux.Vars(r)["handler"]
+	hIndex := -1
+	for i := range config.Handlers {
+		if h == config.Handlers[i].Name {
+			hIndex = i
+			break
+		}
+	}
+
+	if hIndex >= len(config.Handlers)-1 {
+		http.Redirect(w, r, "/config", http.StatusNotFound)
+	}
+
+	handlers[hIndex], handlers[hIndex+1] = handlers[hIndex+1], handlers[hIndex]
+	config.Handlers[hIndex], config.Handlers[hIndex+1] = config.Handlers[hIndex+1], config.Handlers[hIndex]
+
+	handlerNames := make([]string, len(config.Handlers))
+	for i := range config.Handlers {
+		handlerNames[i] = config.Handlers[i].Name
+	}
+	Info("New handler order: ", handlerNames)
 	http.Redirect(w, r, "/config", http.StatusFound)
 }
 
