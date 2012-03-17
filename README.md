@@ -7,9 +7,9 @@ About gutterd
 =============
 
 Gutterd is a deamon process. It demuxes .torrent files found in directories like
-your web browser's download directories and Dropbox. After analyzing their
-metadata, .torrent files are moved to different BitTorrent clients' watched
-directories.
+your web browser's download directory and Dropbox directories. After analyzing
+their metadata, .torrent files are moved to different BitTorrent clients'
+watched directories.
 
 Documentation
 =============
