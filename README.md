@@ -5,23 +5,28 @@
 About gutterd
 =============
 
-Gutterd is a deamon process that inspects downloaded .torrent files and
-organizes them into specific directories based on their content. 
-
-This is meant to be used in conjuction with multiple sessions of `rtorrent`.
+Gutterd is a deamon process. It demuxes .torrent files from browser's download
+directories and Dropbox. After analyzing metadata, .torrent files are moved to
+different BitTorrent clients' watched directories.
 
 Documentation
 =============
 
-Gutterd works by having the user specify a set of torrent handlers.
-Handlers handlers inspect the torrent and can be matched against them
-based on several criteria. If a handler matches a given torrent, the
-handler moves the torrent into a watch directory specific to the handler.
+Usage
+-----
+
+Run gutterd with the command
+
+    gutterd [OPTIONS]
+
+For help with command line options.
+
+    gutterd -h
 
 Configuration
 -------------
 
-Gutterd uses a json configuration stored in `~/.config/gutterd.json`
+Gutterd uses a JSON configuration stored in `~/.config/gutterd.json`
 The configuration specifies directories to watch for incoming torrents,
 as well as the handlers to match against those torrents. Here is an
 example configuration.
@@ -57,27 +62,20 @@ example configuration.
         ]
     }
 
-When handler 'match' properties are unspecified, they will match any
-torrent. Torrents are matched against handlers in the order they are
-specified in the config file. So, in the example above, the 'other'
-handler acts as a catch-all and will match all torrents not matched by
+Handlers
+--------
+
+When handler 'match' properties are unspecified, they will match any torrent.
+Torrents are matched against handlers in order. So, in the example above, the
+'other' handler acts as a catch-all and will match all torrents not matched by
 any other handler.
-
-Usage
------
-
-Run gutterd with the command
-
-    gutterd [OPTIONS]
-
-For help with command line options.
-
-    gutterd -h
 
 Prerequisites
 -------------
 
 [Install Go][].
+
+Use the weekly branch.
 
 Installation
 -------------
@@ -91,7 +89,7 @@ General Documentation
 
 Use godoc to vew the documentation for gutterd
 
-    godoc github.com/bmatsuo/gutterd
+    go doc github.com/bmatsuo/gutterd
 
 Or alternatively, use a godoc http server
 
@@ -103,7 +101,7 @@ and visit [the Godoc URL][]
 Author
 ======
 
-Bryan Matsuo &lt;bmatsuo@soe.ucsc.edu&gt;
+Bryan Matsuo &lt;bryan.matsuo@gmail.com&gt;
 
 Copyright & License
 ===================
