@@ -27,6 +27,7 @@ as well as the handlers to match against those torrents. Here is an
 example configuration.
 
     {
+        "http": ":6060",
         "logPath": "&2",
         "watch": [ "/Users/b/Downloads" ],
         "pollFrequency": 60,
