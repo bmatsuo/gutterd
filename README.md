@@ -1,6 +1,7 @@
 
 [install go]: http://golang.org/install.html "Install Go"
 [the godoc url]: http://localhost:6060/pkg/github.com/bmatsuo/gutterd/ "the Godoc URL"
+[the gopkgdoc url]: http://gopkgdoc.appspot.com/pkg/github.com/bmatsuo/gutterd "the GoPkgDoc URL"
 
 About gutterd
 =============
@@ -91,11 +92,7 @@ Use godoc to vew the documentation for gutterd
 
     go doc github.com/bmatsuo/gutterd
 
-Or alternatively, use a godoc http server
-
-    godoc -http=:6060
-
-and visit [the Godoc URL][]
+Or alternatively, visit [the GoPkgDoc URL][]
 
 Author
 ======
