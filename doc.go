@@ -62,22 +62,30 @@ to match against and demux those files. Here is an example configuration.
         "pollFrequency": 60,
         "handlers": [
             {
-                "name": "music",
-                "watch": "/Users/b/Music",
+                "name": "ubuntu",
+                "watch": "/Users/b/UbuntuImages",
                 "match": {
-                    "tracker": "tracker\\.music\\.net",
-                    "ext": "\\.(mp3|m4a|mp4)"
+                    "tracker": "torrent\\.ubuntu\\.com",
+                    "ext": "\\.iso"
                 }
             },
             {
-                "name": "tv",
-                "watch": "/Users/b/Movies",
-                "match": { "tracker": "tracker\\.tv\\.net" }
+                "name": "arch-net",
+                "watch": "/Users/b/ArchImages/Net",
+                "match": {
+                    "tracker": "tracker\\.archlinux\\.org",
+                    "basename": "netinstall",
+                    "ext": "\\.iso"
+                }
             },
             {
-                "name": "movies",
-                "watch": "/Users/b/Movies",
-                "match": { "tracker": "tracker\\.movies\\.net" }
+                "name": "arch-core",
+                "watch": "/Users/b/ArchImages/Core",
+                "match": {
+                    "tracker": "tracker\\.archlinux\\.org",
+                    "basename": "core",
+                    "ext": "\\.iso"
+                }
             },
             {
                 "name": "other",

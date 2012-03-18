@@ -50,6 +50,12 @@ func (m *matcher) Match(torrent *Metadata) bool {
 			return false
 		}
 	}
+	if m.Basename != nil {
+		basename := filepath.Base(torrent.Info.Name)
+		if !m.Basename.MatchString(basename) {
+			return false
+		}
+	}
 	return true
 }
 
