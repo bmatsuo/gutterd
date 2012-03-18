@@ -16,7 +16,11 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strconv"
 	"strings"
+	"unicode"
 )
 
 type HTTPFormat uint
@@ -138,9 +142,11 @@ var configHTMLTemplateString = `
 						<td>{{.PollFrequency}}s</td>
 						<td>
 							<form name="upPoll" action="/config/pollFrequency" method="post">
+								<input type="hidden" name="delta" value="5" />
 								<input type="submit" value="⬆" />
 								</form>
 							<form name="downPoll" action="/config/pollFrequency" method="post">
+								<input type="hidden" name="delta" value="-5" />
 								<input type="submit" value="⬇" />
 								</form>
 							</td>
@@ -154,14 +160,14 @@ var configHTMLTemplateString = `
 					<tr>
 						<td>{{$w}}</td>
 						<td>
-							<form name="delWatch{{$i}}" action="/config/watch" method="post">
+							<form name="delWatch{{$i}}" action="/config/watch/{{$i}}/delete" method="post">
 								<input type="submit" value="×" />
 								</form>
 							</td>
 						</tr>
 					{{end}}
 					<tr>
-						<form name="newWatch" action="/config/watch" method="post">
+						<form name="newWatch" action="/config/watch/add" method="post">
 							<td><input type="text" name="watch" /></td>
 							<td><input type="submit" value="+" /></td>
 							</form>
@@ -238,10 +244,87 @@ func ConfigControllerShow(w http.ResponseWriter, r *http.Request) {
 }
 
 func ConfigControllerPollUpdate(w http.ResponseWriter, r *http.Request) {
+	_delta := r.FormValue("delta")
+	if _delta == "" {
+		httpLogger.Info("No pollFrequency delta")
+		http.Redirect(w, r, "/config", http.StatusFound)
+		return
+	}
+	delta, err := strconv.ParseInt(_delta, 10, 64)
+	if err != nil {
+		httpLogger.Info("Error parsing delta: ", err)
+		http.Redirect(w, r, "/config", http.StatusFound)
+		return
+	}
+	freq := config.PollFrequency + delta
+	if freq < 0 {
+		httpLogger.Info("Negative frequency: ", freq)
+		http.Redirect(w, r, "/config", http.StatusFound)
+		return
+	}
+	Noticef("Updating poll frequency : %d", freq)
+	config.PollFrequency = freq
 	http.Redirect(w, r, "/config", http.StatusFound)
 }
 
-func ConfigControllerWatchUpdate(w http.ResponseWriter, r *http.Request) {
+func ConfigControllerWatchAdd(w http.ResponseWriter, r *http.Request) {
+	_path := strings.TrimFunc(r.FormValue("watch"), unicode.IsSpace)
+	if _path == "" {
+		httpLogger.Error("No 'watch' specified.")
+		http.Redirect(w, r, "/config", http.StatusFound)
+		return
+	}
+	if !strings.HasPrefix(_path, "/") {
+		httpLogger.Error("Non-absolute path specified.")
+		http.Redirect(w, r, "/config", http.StatusFound)
+		return
+	}
+	path, err := filepath.EvalSymlinks(_path)
+	if err != nil {
+		httpLogger.Error("Error evaluating symlinks: ", err)
+		http.Redirect(w, r, "/config", http.StatusNotFound)
+		return
+	}
+	stat, err := os.Stat(path)
+	if err != nil {
+		httpLogger.Error("Cannot stat: ", err)
+		http.Redirect(w, r, "/config", http.StatusNotFound)
+		return
+	}
+	if !stat.IsDir() {
+		httpLogger.Error("Not a directory: ", _path)
+		http.Redirect(w, r, "/config", http.StatusNotFound)
+		return
+	}
+	for _, _watch := range config.Watch {
+		watch, err := filepath.EvalSymlinks(_watch)
+		if err != nil {
+			httpLogger.Error("Error evaluating symlinks: ", err)
+			http.Redirect(w, r, "/config", http.StatusNotFound)
+			return
+		}
+		if watch == path {
+			httpLogger.Error("Already watching: ", _path)
+			http.Redirect(w, r, "/config", http.StatusNotFound)
+			return
+		}
+	}
+	Notice("Watching directory: ", _path)
+	config.Watch = append(config.Watch, _path)
+	http.Redirect(w, r, "/config", http.StatusFound)
+}
+
+func ConfigControllerWatchDelete(w http.ResponseWriter, r *http.Request) {
+	_i, err := strconv.ParseInt(mux.Vars(r)["index"], 10, 0)
+	if err != nil {
+		http.Redirect(w, r, "/config", http.StatusInternalServerError)
+	}
+	i := int(_i)
+	if i >= len(config.Watch) {
+		http.Redirect(w, r, "/config", http.StatusNotFound)
+	}
+	Notice("No longer watching directory: ", config.Watch[i])
+	config.Watch = append(config.Watch[:i], config.Watch[i+1:]...)
 	http.Redirect(w, r, "/config", http.StatusFound)
 }
 
@@ -311,7 +394,7 @@ func HandlerControllerUp(w http.ResponseWriter, r *http.Request) {
 	for i := range config.Handlers {
 		handlerNames[i] = config.Handlers[i].Name
 	}
-	Info("New handler order: ", handlerNames)
+	Notice("New handler order: ", handlerNames)
 
 	http.Redirect(w, r, "/config", http.StatusFound)
 }
@@ -371,7 +454,9 @@ func ListenAndServe() {
 		Methods("POST")
 	router.HandleFunc("/config/pollFrequency", ConfigControllerPollUpdate).
 		Methods("POST")
-	router.HandleFunc("/config/watch", ConfigControllerWatchUpdate).
+	router.HandleFunc("/config/watch/{index:[0-9]+}/delete", ConfigControllerWatchDelete).
+		Methods("POST")
+	router.HandleFunc("/config/watch/add", ConfigControllerWatchAdd).
 		Methods("POST")
 	router.HandleFunc("/config/save", ConfigControllerSave).
 		Methods("POST")
