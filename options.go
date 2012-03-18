@@ -20,8 +20,8 @@ import (
 // TODO Customize exported (capitalized) variables, types, and functions.
 
 var (
-	cmdHelpUsage = "gutterd [-log=LOGPATH] [-poll=SECONDS]"
-	cmdHelpFoot  = "Create a default configuration in ~/.config/gutterd.json"
+	cmdHelpUsage = "gutterd [options]"
+	cmdHelpFoot  string
 )
 
 // A struct that holds levyd's parsed command line flags.
@@ -32,7 +32,7 @@ type Options struct {
 	WatchStr      string
 	Watch         []string
 	LogPath       string
-	Verbose       bool
+	LogAccepts    string
 }
 
 //  Create a flag.FlagSet to parse the levyd's flags.
@@ -42,8 +42,8 @@ func setupFlags(opt *Options) *flag.FlagSet {
 	fs.StringVar(&opt.HTTP, "http", "", "Address to serve web requests from (e.g. ':6060').")
 	fs.StringVar(&opt.WatchStr, "watch", "", "Specify a set of directories to watch.")
 	fs.StringVar(&opt.ConfigPath, "config", "", "A config file to use instead of ~/.config/gutterd.json.")
-	fs.StringVar(&opt.LogPath, "log", "", "Specify a log output path.")
-	fs.BoolVar(&opt.Verbose, "v", false, "Verbose program output.")
+	fs.StringVar(&opt.LogPath, "log", "", "Log output path.")
+	fs.StringVar(&opt.LogAccepts, "log-accepts", "", "Comma separated list of logs (e.g. 'gutterd,http').")
 	return setupUsage(fs)
 }
 

@@ -31,9 +31,15 @@ type HandlerConfig struct {
 	Match MatcherConfig `json:"match"` // Describes .torrent files to handle.
 }
 
+type LogConfig struct {
+	Path    string   `json:"path"`    // Log output path (&2/&1 for stderr/stdout).
+	Accepts []string `json:"accepts"` // Names logs accepted ("gutterd", "http", ...).
+}
+
 type Config struct {
 	HTTP          string          `json:"http"`          // HTTP service address.
 	LogPath       string          `json:"logPath"`       // Log output path (or FD).
+	Logs          []LogConfig     `json:"logs"`          // Log configurations.
 	Watch         []string        `json:"watch"`         // Incoming watch directories.
 	PollFrequency int64           `json:"pollFrequency"` // Poll frequency in seconds.
 	Handlers      []HandlerConfig `json:"handlers"`      // Ordered set of handlers.

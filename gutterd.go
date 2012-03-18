@@ -17,7 +17,9 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
+	"unicode"
 )
 
 var (
@@ -68,6 +70,9 @@ func init() {
 	defconfig := &Config{
 		PollFrequency: 60,
 		LogPath:       "&2",
+		Logs: []LogConfig{
+			{"&2", []string{"gutterd", "http"}},
+		},
 	}
 	if opt.ConfigPath != "" {
 		if config, err = LoadConfig(opt.ConfigPath, defconfig); err != nil {
@@ -101,23 +106,34 @@ func init() {
 	// Setup the logging destination.
 	if opt.LogPath != "" {
 		config.LogPath = opt.LogPath
-	}
-	var logfile io.Writer
-	switch config.LogPath {
-	case "":
-		fallthrough
-	case "&2":
-		logfile = os.Stderr
-	case "&1":
-		logfile = os.Stdout
-	default:
-		logfile, err = os.OpenFile(config.LogPath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-		if err != nil {
-			Fatalf("Couldn't open log file: %s", config.LogPath)
+		accepts := strings.TrimFunc(opt.LogAccepts, unicode.IsSpace)
+		if accepts == "" {
+			accepts = strings.Join(defconfig.Logs[0].Accepts, ",")
 		}
+		logConfig := LogConfig{opt.LogPath, strings.Split(accepts, ",")}
+		for i := range logConfig.Accepts {
+			logConfig.Accepts[i] = strings.TrimFunc(logConfig.Accepts[i], unicode.IsSpace)
+		}
+		config.Logs = []LogConfig{logConfig}
+	}
+	for _, logConfig := range config.Logs {
+		var logfile io.Writer
+		switch logConfig.Path {
+		case "":
+			fallthrough
+		case "&2":
+			logfile = os.Stderr
+		case "&1":
+			logfile = os.Stdout
+		default:
+			logfile, err = os.OpenFile(config.LogPath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+			if err != nil {
+				Fatalf("Couldn't open log file: %s", config.LogPath)
+			}
+		}
+		loggerMux.NewSink(log.New(logfile, "", log.LstdFlags), logConfig.Accepts...)
 	}
 
-	loggerMux.NewSink(log.New(logfile, "", log.LstdFlags), "gutterd", "http")
 	loggerMux.RemoveSink(initLogger)
 }
 
