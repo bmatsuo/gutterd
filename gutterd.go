@@ -56,6 +56,20 @@ func HomeDirectory() (home string, err error) {
 	return
 }
 
+func logNamesFromString(s string) []string {
+	accepts := strings.TrimFunc(s, unicode.IsSpace)
+	namesraw := strings.Split(accepts, ",")
+	names := make([]string, 0, len(namesraw))
+	for i := range namesraw {
+		name := strings.TrimFunc(namesraw[i], unicode.IsSpace)
+		if name == "" {
+			continue
+		}
+		names = append(names, name)
+	}
+	return names
+}
+
 // Read the config file and setup global variables.
 func init() {
 	loggerMux = new(LoggerMux)
@@ -103,18 +117,16 @@ func init() {
 		_initHTTP()
 	}
 
-	// Setup the logging destination.
+	// Setup logging destinations.
 	if opt.LogPath != "" {
 		config.LogPath = opt.LogPath
-		accepts := strings.TrimFunc(opt.LogAccepts, unicode.IsSpace)
-		if accepts == "" {
-			accepts = strings.Join(defconfig.Logs[0].Accepts, ",")
+		accepts := logNamesFromString(opt.LogAccepts)
+		if len(accepts) == 0 {
+			accepts = defconfig.Logs[0].Accepts
 		}
-		logConfig := LogConfig{opt.LogPath, strings.Split(accepts, ",")}
-		for i := range logConfig.Accepts {
-			logConfig.Accepts[i] = strings.TrimFunc(logConfig.Accepts[i], unicode.IsSpace)
-		}
-		config.Logs = []LogConfig{logConfig}
+		config.Logs = []LogConfig{{opt.LogPath, accepts}}
+	} else if accepts := logNamesFromString(opt.LogAccepts); len(accepts) > 0 {
+		config.Logs = []LogConfig{{defconfig.Logs[0].Path, accepts}}
 	}
 	for _, logConfig := range config.Logs {
 		var logfile io.Writer

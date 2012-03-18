@@ -114,7 +114,22 @@ var configHTMLTemplateString = `
 				</div>
 			<div>
 				<h2>Logs:</h2>
-				{{.LogPath}}
+				<table class="config">
+					<tr>
+						<th>Name</th>
+						<th>Accepts</th>
+						</tr>
+					{{range .Logs}}
+					<tr>
+						<td>{{.Path}}</td>
+						<td>
+							{{range .Accepts}}
+							{{.}},
+							{{end}}
+							</td>
+						</tr>
+					{{end}}
+					</table>
 				</div>
 			<div>
 				<h2>Poll frequency:</h2>
