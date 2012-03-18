@@ -89,7 +89,7 @@ to match against and demux those files. Here is an example configuration.
             },
             {
                 "name": "other",
-                "watch": "/Users/b"
+                "watch": "/Users/b/DL"
             }
         ]
     }

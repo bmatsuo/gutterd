@@ -72,7 +72,7 @@ example configuration.
             },
             {
                 "name": "other",
-                "watch": "/Users/b"
+                "watch": "/Users/b/DL"
             }
         ]
     }
