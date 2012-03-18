@@ -148,7 +148,7 @@ func main() {
 	}
 
 	if config.HTTP != "" {
-		ListenAndServe()
+		go ListenAndServe()
 	}
 
 	// Poll watch directories, handling all torrents found.
