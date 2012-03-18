@@ -37,6 +37,7 @@ type LogConfig struct {
 }
 
 type Config struct {
+	Path          string          `json:"-"`             // The path of the config file.
 	HTTP          string          `json:"http"`          // HTTP service address.
 	Logs          []LogConfig     `json:"logs"`          // Log configurations.
 	Watch         []string        `json:"watch"`         // Incoming watch directories.
@@ -49,6 +50,7 @@ func LoadConfig(path string, defaults *Config) (*Config, error) {
 	if defaults != nil {
 		*config = *defaults
 	}
+	config.Path = path
 	if _, err := os.Stat(path); err != nil {
 		if os.IsNotExist(err) {
 			return config, nil

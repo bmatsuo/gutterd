@@ -111,6 +111,9 @@ var configHTMLTemplateString = `
 			</style>
 
 		<h1>Configuration</h1>
+		<div class="config note">
+			Changes will not overwrite the configuration file at {{.Path}}.
+			</div>
 		<div class="config">
 			<div>
 				<h2>Web server:</h2>
