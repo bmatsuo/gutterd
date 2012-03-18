@@ -83,7 +83,6 @@ func init() {
 	var err error
 	defconfig := &Config{
 		PollFrequency: 60,
-		LogPath:       "&2",
 		Logs: []LogConfig{
 			{"&2", []string{"gutterd", "http"}},
 		},
@@ -119,7 +118,6 @@ func init() {
 
 	// Setup logging destinations.
 	if opt.LogPath != "" {
-		config.LogPath = opt.LogPath
 		accepts := logNamesFromString(opt.LogAccepts)
 		if len(accepts) == 0 {
 			accepts = defconfig.Logs[0].Accepts
@@ -138,9 +136,9 @@ func init() {
 		case "&1":
 			logfile = os.Stdout
 		default:
-			logfile, err = os.OpenFile(config.LogPath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+			logfile, err = os.OpenFile(logConfig.Path, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 			if err != nil {
-				Fatalf("Couldn't open log file: %s", config.LogPath)
+				Fatalf("Couldn't open log file: %s", logConfig.Path)
 			}
 		}
 		loggerMux.NewSink(log.New(logfile, "", log.LstdFlags), logConfig.Accepts...)

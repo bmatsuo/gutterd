@@ -38,7 +38,6 @@ type LogConfig struct {
 
 type Config struct {
 	HTTP          string          `json:"http"`          // HTTP service address.
-	LogPath       string          `json:"logPath"`       // Log output path (or FD).
 	Logs          []LogConfig     `json:"logs"`          // Log configurations.
 	Watch         []string        `json:"watch"`         // Incoming watch directories.
 	PollFrequency int64           `json:"pollFrequency"` // Poll frequency in seconds.
