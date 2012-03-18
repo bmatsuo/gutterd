@@ -95,9 +95,15 @@ Use the weekly branch.
 Installation
 -------------
 
-Use goinstall to install gutterd
+Use `go get` to install gutterd
 
     go get github.com/bmatsuo/gutterd
+
+Or, install the dependencies, clone the repo, and install manually
+
+    go get github.com/bmatsuo/gorrent/bencode
+    git clone https://github.com/bmatsuo/gutterd.git
+    go install gutterd
 
 General Documentation
 ---------------------

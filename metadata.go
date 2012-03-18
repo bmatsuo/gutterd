@@ -12,7 +12,7 @@ package main
 
 import (
 	"fmt"
-	"gorrent/bencode"
+	"github.com/bmatsuo/gorrent/bencode"
 	"io/ioutil"
 )
 
