@@ -92,6 +92,11 @@ Prerequisites
 
 Use the weekly branch.
 
+    cd $GOROOT/src
+    hg pull
+    hg update weekly
+    ./all.bash
+
 Installation
 -------------
 
