@@ -35,12 +35,12 @@ example configuration.
 
     {
         "http": ":6060",
-		"logs": [
-			{
-				"path": "&2",
-				"accepts": [ "gutterd", "http" ]
-			}
-		],
+        "logs": [
+            {
+                "path": "&2",
+                "accepts": [ "gutterd", "http" ]
+            }
+        ],
         "watch": [ "/Users/b/Downloads" ],
         "pollFrequency": 60,
         "handlers": [

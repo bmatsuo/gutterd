@@ -8,7 +8,6 @@
  *  Description: Godoc documentation for gutterd
  */
 
-
 /*
 Gutterd is a deamon process. It demuxes .torrent files found in directories like
 your web browser's download directory and Dropbox directories. After analyzing
@@ -53,12 +52,12 @@ to match against and demux those files. Here is an example configuration.
 
     {
         "http": ":6060",
-		"logs": [
-			{
-				"path": "&2",
-				"accepts": [ "gutterd", "http" ]
-			}
-		],
+        "logs": [
+            {
+                "path": "&2",
+                "accepts": [ "gutterd", "http" ]
+            }
+        ],
         "watch": [ "/Users/b/Downloads" ],
         "pollFrequency": 60,
         "handlers": [
