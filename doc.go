@@ -31,7 +31,13 @@ configuration file. Default values will be ignored.
   			Address to serve web requests from (e.g. ':6060').
 
 	-log=""
-			Specify a log output path.
+			A path to log output. This overrides all logs specified in the config file.
+			If -log-accepts is not specified, all logs will be output to the file.
+
+	-log-accepts=""
+			Log names for filtering the log specified with -log. If -log is not
+			specified, accepted logs are printed to stderr. Similar to -log, logs in the
+			config file wil be overridden when the flag is provided.
 
 	-poll=0
 			Specify a polling frequency (in seconds).
@@ -47,7 +53,12 @@ to match against and demux those files. Here is an example configuration.
 
     {
         "http": ":6060",
-        "logPath": "&2",
+		"logs": [
+			{
+				"path": "&2",
+				"accepts": [ "gutterd", "http" ]
+			}
+		],
         "watch": [ "/Users/b/Downloads" ],
         "pollFrequency": 60,
         "handlers": [
