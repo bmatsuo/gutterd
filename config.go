@@ -45,23 +45,18 @@ type Config struct {
 	Handlers      []HandlerConfig `json:"handlers"`      // Ordered set of handlers.
 }
 
-func LoadConfig(path string, defaults *Config) (*Config, error) {
-	config := new(Config)
-	if defaults != nil {
+func loadConfigFromBytes(p []byte, path string, defaults *Config) (config *Config, err error) {
+	if config = new(Config); defaults != nil { // Tightly coupled events.
 		*config = *defaults
 	}
-	config.Path = path
-	if _, err := os.Stat(path); err != nil {
-		if os.IsNotExist(err) {
-			return config, nil
-		}
-		return config, err
-	}
-	if configBytes, err := ioutil.ReadFile(path); err != nil {
-		return config, fmt.Errorf("read error: %v", err)
-	} else if err = json.Unmarshal(configBytes, config); err != nil {
+
+	if err = json.Unmarshal(p, config); err != nil {
 		return config, fmt.Errorf("json error: %v", err)
 	}
+
+	config.Path = path // Overwrite any JSON specified value.
+
+	// Validate handlers.
 	for i, handler := range config.Handlers {
 		name := handler.Name
 		if name == "" {
@@ -71,12 +66,26 @@ func LoadConfig(path string, defaults *Config) (*Config, error) {
 			return config, fmt.Errorf("handler %v: no watch directory", i)
 		}
 		if stat, err := os.Stat(handler.Watch); err != nil {
-			return config, fmt.Errorf("can't stat watch directory %s: %v", handler.Watch, err)
+			return config, err // The return parameter "err" is shadowed.
 		} else if !stat.IsDir() {
-			return config, fmt.Errorf("watch entry is not a directory: %s", handler.Watch)
+			return config, fmt.Errorf("'watch' entry is not a directory: %s", handler.Watch)
 		}
 	}
-	return config, nil
+	return
+}
+
+func LoadConfig(path string, defaults *Config) (*Config, error) {
+	if _, err := os.Stat(path); err != nil {
+		if os.IsNotExist(err) {
+			return config, nil
+		}
+		return config, err
+	}
+	p, err := ioutil.ReadFile(path)
+	if err != nil {
+		return config, fmt.Errorf("read error: %v", err)
+	}
+	return loadConfigFromBytes(p, path, defaults)
 }
 
 func (c *Config) MakeHandlers() []*Handler {

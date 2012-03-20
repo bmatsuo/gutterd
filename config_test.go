@@ -7,11 +7,17 @@ package main
  */
 
 import (
-    "testing"
+	"testing"
 )
 
+var configTests = []struct {
+	cstr string
+	cdef *Config
+	c    *Config
+}{
+	{"{}", &Config{}, &Config{}},
+}
 
 func TestConfig(t *testing.T) {
 
 }
-
