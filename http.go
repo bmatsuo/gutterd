@@ -123,7 +123,7 @@ var configHTMLTemplateString = `
 		<div class="config">
 			<div>
 				<h2>Web server:</h2>
-				{{.HTTP}}
+				<div class="config">{{.HTTP}}</div>
 				</div>
 			<div>
 				<h2>Logs:</h2>
