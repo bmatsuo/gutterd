@@ -202,13 +202,13 @@ var configHTMLTemplateString = `
 					{{range $i, $h := .Handlers}}
 					<tr>
 						<th>
-							<form name="delHandler{{$i}}" action="/config/handler/{{$h.Name}}/delete" method="post">
+							<form name="delHandler{{$i}}" action="/config/handlers/{{$h.Name}}/delete" method="post">
 								<input type="submit" value="×" />
 								</form>
-							<form name="upHandler{{$i}}" action="/config/handler/{{$h.Name}}/up" method="post">
+							<form name="upHandler{{$i}}" action="/config/handlers/{{$h.Name}}/up" method="post">
 								<input type="submit" value="⬆" />
 								</form>
-							<form name="downHandler{{$i}}" action="/config/handler/{{$h.Name}}/down" method="post">
+							<form name="downHandler{{$i}}" action="/config/handlers/{{$h.Name}}/down" method="post">
 								<input type="submit" value="⬇" />
 								</form>
 							</th>
@@ -345,6 +345,10 @@ func HandlerControllerNew(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "New handler form.")
 }
 
+func HandlerControllerCreate(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, "/config", http.StatusFound)
+}
+
 func HandlerControllerPrepend(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/config", http.StatusFound)
 }
@@ -451,15 +455,17 @@ func ListenAndServe() {
 		Methods("POST")
 	router.HandleFunc("/config/handlers/new", HandlerControllerNew).
 		Methods("GET")
-	router.HandleFunc("/config/handler/{handler}/delete", HandlerControllerDelete).
+	router.HandleFunc("/config/handlers/create", HandlerControllerNew).
+		Methods("PUT")
+	router.HandleFunc("/config/handlers/{handler}/delete", HandlerControllerDelete).
 		Methods("POST")
-	router.HandleFunc("/config/handler/{handler}/up", HandlerControllerUp).
+	router.HandleFunc("/config/handlers/{handler}/up", HandlerControllerUp).
 		Methods("POST")
-	router.HandleFunc("/config/handler/{handler}/down", HandlerControllerDown).
+	router.HandleFunc("/config/handlers/{handler}/down", HandlerControllerDown).
 		Methods("POST")
-	router.HandleFunc("/config/handler/{handler}/name", HandlerControllerNameUpdate).
+	router.HandleFunc("/config/handlers/{handler}/name", HandlerControllerNameUpdate).
 		Methods("POST")
-	router.HandleFunc("/config/handler/{handler}/watch", HandlerControllerWatchUpdate).
+	router.HandleFunc("/config/handlers/{handler}/watch", HandlerControllerWatchUpdate).
 		Methods("POST")
 	router.HandleFunc("/config/pollFrequency", ConfigControllerPollUpdate).
 		Methods("POST")
