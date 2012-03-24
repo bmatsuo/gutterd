@@ -100,6 +100,7 @@ var configHTMLTemplateString = `
 .config input {
 	padding:0;
 	margin:0;
+	width:100%;
 	background:#FFF;
 }
 {{end}}
@@ -219,6 +220,19 @@ var configHTMLTemplateString = `
 						<td>{{$h.Match.Ext}}</td>
 						</tr>
 					{{end}}
+					<tr>
+						<form name="newHondler" id="newHandler" action="/config/handlers/create" method="post">
+							<th>
+								<input type="submit" value="✓" />
+								<input type="button" value="×" />
+								</th>
+							<td><input type="text" name="name" /></td>
+							<td><input type="text" name="watch" /></td>
+							<td><input type="text" name="tracker" /></td>
+							<td><input type="text" name="basename" /></td>
+							<td><input type="text" name="ext" /></td>
+							</form>
+						</tr>
 					</table>
 				</div>
 			</div>
@@ -349,18 +363,6 @@ func HandlerControllerCreate(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/config", http.StatusFound)
 }
 
-func HandlerControllerPrepend(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, "/config", http.StatusFound)
-}
-
-func HandlerControllerAppend(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, "/config", http.StatusFound)
-}
-
-func HandlerControllerInsert(w http.ResponseWriter, r *http.Request) {
-	http.Redirect(w, r, "/config", http.StatusFound)
-}
-
 func HandlerControllerDelete(w http.ResponseWriter, r *http.Request) {
 	h := mux.Vars(r)["handler"]
 	hIndex := -1
@@ -447,16 +449,10 @@ func HandlerControllerWatchUpdate(w http.ResponseWriter, r *http.Request) {
 
 func ListenAndServe() {
 	router := mux.NewRouter()
-	router.HandleFunc("/config/handlers/prepend", HandlerControllerPrepend).
-		Methods("POST")
-	router.HandleFunc("/config/handlers/append", HandlerControllerAppend).
-		Methods("POST")
-	router.HandleFunc("/config/handlers/insert", HandlerControllerInsert).
-		Methods("POST")
 	router.HandleFunc("/config/handlers/new", HandlerControllerNew).
 		Methods("GET")
-	router.HandleFunc("/config/handlers/create", HandlerControllerNew).
-		Methods("PUT")
+	router.HandleFunc("/config/handlers/create", HandlerControllerCreate).
+		Methods("POST")
 	router.HandleFunc("/config/handlers/{handler}/delete", HandlerControllerDelete).
 		Methods("POST")
 	router.HandleFunc("/config/handlers/{handler}/up", HandlerControllerUp).
