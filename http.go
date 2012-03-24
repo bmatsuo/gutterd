@@ -64,6 +64,47 @@ func HTTPRequestFormat(r *http.Request) HTTPFormat {
 }
 
 var configHTMLTemplateString = `
+{{define "css"}}
+.config {
+	margin-left:50;
+}
+.config ul {
+	list-style-type:none;
+}
+.config table {
+	/*border-width: 1px;*/
+	/*border-color: gray;*/
+	/*border-style: outset;*/
+}
+.config th {
+	padding: 3px;
+	padding-left: 5px;
+	padding-right: 5px;
+	/*border-width: 1px;*/
+	/*border-style: solid;*/
+	/*border-color: gray;*/
+	/*background-color: #EEEEEE;*/
+}
+.config td {
+	padding: 3px;
+	padding-left: 5px;
+	padding-right: 5px;
+	/*border-width: 1px;*/
+	/*border-style: solid;*/
+	/*border-color: gray;*/
+}
+.config form {
+	padding:0;
+	margin:0;
+}
+.config input {
+	padding:0;
+	margin:0;
+	background:#FFF;
+}
+{{end}}
+
+{{define "html"}}
 <html>
 	<head>
 		<title>config | gutterd</title>
@@ -71,43 +112,7 @@ var configHTMLTemplateString = `
 		</head>
 	<body>
 		<style type="text/css">
-			.config {
-				margin-left:50;
-			}
-			.config ul {
-				list-style-type:none;
-			}
-			.config table {
-				/*border-width: 1px;*/
-				/*border-color: gray;*/
-				/*border-style: outset;*/
-			}
-			.config th {
-				padding: 3px;
-				padding-left: 5px;
-				padding-right: 5px;
-				/*border-width: 1px;*/
-				/*border-style: solid;*/
-				/*border-color: gray;*/
-				/*background-color: #EEEEEE;*/
-			}
-			.config td {
-				padding: 3px;
-				padding-left: 5px;
-				padding-right: 5px;
-				/*border-width: 1px;*/
-				/*border-style: solid;*/
-				/*border-color: gray;*/
-			}
-			.config form {
-				padding:0;
-				margin:0;
-			}
-			.config input {
-				padding:0;
-				margin:0;
-				background:#FFF;
-			}
+			{{template "css"}}
 			</style>
 
 		<h1>Configuration</h1>
@@ -219,6 +224,7 @@ var configHTMLTemplateString = `
 			</div>
 		</body>
 	</html>
+{{end}}
 `
 var configHTMLTemplate = template.Must(template.New("config").Parse(configHTMLTemplateString))
 
@@ -226,7 +232,7 @@ func ConfigControllerShow(w http.ResponseWriter, r *http.Request) {
 	format := HTTPRequestFormat(r)
 	switch format {
 	case Hhtml:
-		err := configHTMLTemplate.Execute(w, config)
+		err := configHTMLTemplate.ExecuteTemplate(w, "html", config)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
