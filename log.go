@@ -120,23 +120,23 @@ func (l *gLogger) Output(calldepth int, s string) error {
 	return l.output(calldepth, fmt.Sprintf("%s\t%s", l.name, s))
 }
 func (l *gLogger) Debug(v ...interface{})                    { l.Output(4, fmt.Sprint("DEBUG\t", fmt.Sprint(v...))) }
-func (l *gLogger) Debugf(format string, v ...interface{})    { l.Output(4, fmt.Sprintf(format, v...)) }
-func (l *gLogger) Debugln(v ...interface{})                  { l.Output(4, fmt.Sprintln(v...)) }
+func (l *gLogger) Debugf(format string, v ...interface{})    { l.Output(4, fmt.Sprint("DEBUG\t",fmt.Sprintf(format, v...))) }
+func (l *gLogger) Debugln(v ...interface{})                  { l.Output(4, fmt.Sprint("DEBUG\t",fmt.Sprintln(v...))) }
 func (l *gLogger) Info(v ...interface{})                     { l.Output(4, fmt.Sprint("INFO\t", fmt.Sprint(v...))) }
-func (l *gLogger) Infof(format string, v ...interface{})     { l.Output(4, fmt.Sprintf(format, v...)) }
-func (l *gLogger) Infoln(v ...interface{})                   { l.Output(4, fmt.Sprintln(v...)) }
+func (l *gLogger) Infof(format string, v ...interface{})     { l.Output(4, fmt.Sprint("INFO\t",fmt.Sprintf(format, v...))) }
+func (l *gLogger) Infoln(v ...interface{})                   { l.Output(4, fmt.Sprint("INFO\t",fmt.Sprintln(v...))) }
 func (l *gLogger) Notice(v ...interface{})                   { l.Output(4, fmt.Sprint("NOTICE\t", fmt.Sprint(v...))) }
-func (l *gLogger) Noticef(format string, v ...interface{})   { l.Output(4, fmt.Sprintf(format, v...)) }
-func (l *gLogger) Noticeln(v ...interface{})                 { l.Output(4, fmt.Sprintln(v...)) }
+func (l *gLogger) Noticef(format string, v ...interface{})   { l.Output(4, fmt.Sprint("NOTICE\t",fmt.Sprintf(format, v...))) }
+func (l *gLogger) Noticeln(v ...interface{})                 { l.Output(4, fmt.Sprint("NOTICE\t",fmt.Sprintln(v...))) }
 func (l *gLogger) Warn(v ...interface{})                     { l.Output(4, fmt.Sprint("WARN\t", fmt.Sprint(v...))) }
-func (l *gLogger) Warnf(format string, v ...interface{})     { l.Output(4, fmt.Sprintf(format, v...)) }
-func (l *gLogger) Warnln(v ...interface{})                   { l.Output(4, fmt.Sprintln(v...)) }
+func (l *gLogger) Warnf(format string, v ...interface{})     { l.Output(4, fmt.Sprint("WARN\t",fmt.Sprintf(format, v...))) }
+func (l *gLogger) Warnln(v ...interface{})                   { l.Output(4, fmt.Sprint("WARN\t",fmt.Sprintln(v...))) }
 func (l *gLogger) Error(v ...interface{})                    { l.Output(4, fmt.Sprint("ERROR\t", fmt.Sprint(v...))) }
-func (l *gLogger) Errorf(format string, v ...interface{})    { l.Output(4, fmt.Sprintf(format, v...)) }
-func (l *gLogger) Errorln(v ...interface{})                  { l.Output(4, fmt.Sprintln(v...)) }
+func (l *gLogger) Errorf(format string, v ...interface{})    { l.Output(4, fmt.Sprint("ERROR\t",fmt.Sprintf(format, v...))) }
+func (l *gLogger) Errorln(v ...interface{})                  { l.Output(4, fmt.Sprint("ERROR\t",fmt.Sprintln(v...))) }
 func (l *gLogger) Critical(v ...interface{})                 { l.Output(4, fmt.Sprint("CRITICAL\t", fmt.Sprint(v...))) }
-func (l *gLogger) Criticalf(format string, v ...interface{}) { l.Output(4, fmt.Sprintf(format, v...)) }
-func (l *gLogger) Criticalln(v ...interface{})               { l.Output(4, fmt.Sprintln(v...)) }
+func (l *gLogger) Criticalf(format string, v ...interface{}) { l.Output(4, fmt.Sprint("CRITICAL\t",fmt.Sprintf(format, v...))) }
+func (l *gLogger) Criticalln(v ...interface{})               { l.Output(4, fmt.Sprint("CRITICAL\t",fmt.Sprintln(v...))) }
 func (l *gLogger) Print(v ...interface{})                    { l.Output(4, fmt.Sprint(v...)) }
 func (l *gLogger) Printf(format string, v ...interface{})    { l.Output(4, fmt.Sprintf(format, v...)) }
 func (l *gLogger) Println(v ...interface{})                  { l.Output(4, fmt.Sprintln(v...)) }
