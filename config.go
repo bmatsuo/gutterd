@@ -12,6 +12,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -25,10 +26,60 @@ type MatcherConfig struct {
 	Ext      string `json:"ext"`      // Matched (nested-)file extensions.
 }
 
+func (mc MatcherConfig) Matcher() *matcher {
+	m := new(matcher)
+	if mc.Tracker != "" {
+		m.Tracker = regexp.MustCompile(mc.Tracker)
+	}
+	if mc.Basename != "" {
+		m.Basename = regexp.MustCompile(mc.Basename)
+	}
+	if mc.Ext != "" {
+		m.Ext = regexp.MustCompile(mc.Ext)
+	}
+	return m
+}
+
+func (mc MatcherConfig) Validate() error {
+	if _, err := regexp.Compile(mc.Tracker); err != nil {
+		return fmt.Errorf("matcher tracker: %v", err)
+	}
+	if _, err := regexp.Compile(mc.Basename); err != nil {
+		return fmt.Errorf("matcher basename: %v", err)
+	}
+	if _, err := regexp.Compile(mc.Ext); err != nil {
+		return fmt.Errorf("matcher ext: %v", err)
+	}
+	return nil
+}
+
 type HandlerConfig struct {
 	Name  string        `json:"name"`  // A name for logging purposes.
 	Watch string        `json:"watch"` // Matching .torrent file destination.
 	Match MatcherConfig `json:"match"` // Describes .torrent files to handle.
+}
+
+func (c HandlerConfig) Handler() *Handler { return &Handler{c.Name, c.Watch, c.Match.Matcher()} }
+
+func (hc HandlerConfig) Validate() error {
+	if hc.Name == "" {
+		return errors.New("nameless handler")
+	}
+	if hc.Watch == "" {
+		return fmt.Errorf("handler %q: no watch directory.", hc.Name)
+	}
+	stat, err := os.Stat(hc.Watch)
+	if err != nil {
+		return err
+	}
+	if !stat.IsDir() {
+		return fmt.Errorf("handler %q: watch is not a directory: %s", hc.Name, hc.Watch)
+	}
+	err = hc.Match.Validate()
+	if err != nil {
+		return fmt.Errorf("handler %q: %v", hc.Name, err)
+	}
+	return nil
 }
 
 type LogConfig struct {
@@ -43,6 +94,30 @@ type Config struct {
 	Watch         []string        `json:"watch"`         // Incoming watch directories.
 	PollFrequency int64           `json:"pollFrequency"` // Poll frequency in seconds.
 	Handlers      []HandlerConfig `json:"handlers"`      // Ordered set of handlers.
+}
+
+func (config Config) Validate() error {
+	if config.Path == "" {
+		return errors.New("config: no path")
+	}
+	for _, watch := range config.Watch {
+		stat, err := os.Stat(watch)
+		if err != nil {
+			return err
+		}
+		if !stat.IsDir() {
+			return fmt.Errorf("config: watch is not a directory: %s", config.Watch)
+		}
+	}
+	if config.PollFrequency <= 0 {
+		return fmt.Errorf("config: invalid pollFrequency: %d", config.PollFrequency)
+	}
+	for _, handler := range config.Handlers {
+		if err := handler.Validate(); err != nil {
+			return fmt.Errorf("config: %v", err)
+		}
+	}
+	return nil
 }
 
 func loadConfigFromBytes(p []byte, path string, defaults *Config) (config *Config, err error) {
@@ -85,25 +160,18 @@ func LoadConfig(path string, defaults *Config) (*Config, error) {
 	if err != nil {
 		return config, fmt.Errorf("read error: %v", err)
 	}
-	return loadConfigFromBytes(p, path, defaults)
+	config, err := loadConfigFromBytes(p, path, defaults)
+	if err != nil {
+		return nil, err
+	}
+	err = config.Validate()
+	return config, err
 }
 
 func (c *Config) MakeHandlers() []*Handler {
-	handlers := make([]*Handler, 0, len(c.Handlers))
-	for _, config := range c.Handlers {
-		mconfig := config.Match
-		m := new(matcher)
-		if mconfig.Tracker != "" {
-			m.Tracker = regexp.MustCompile(mconfig.Tracker)
-		}
-		if mconfig.Basename != "" {
-			m.Basename = regexp.MustCompile(mconfig.Basename)
-		}
-		if mconfig.Ext != "" {
-			m.Ext = regexp.MustCompile(mconfig.Ext)
-		}
-
-		handlers = append(handlers, &Handler{config.Name, config.Watch, m})
+	handlers := make([]*Handler, len(c.Handlers))
+	for i := range c.Handlers {
+		handlers[i] = c.Handlers[i].Handler()
 	}
 	return handlers
 }

@@ -360,6 +360,29 @@ func HandlerControllerNew(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandlerControllerCreate(w http.ResponseWriter, r *http.Request) {
+	var hc HandlerConfig
+	hc.Name = r.FormValue("name")
+	hc.Watch = r.FormValue("watch")
+	hc.Match.Tracker = r.FormValue("tracker")
+	hc.Match.Basename = r.FormValue("basename")
+	hc.Match.Ext = r.FormValue("ext")
+	if err := hc.Validate(); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	for _, h := range config.Handlers {
+		if h.Name == hc.Name {
+			http.Error(w, "handler already exists with name "+hc.Name, http.StatusBadRequest)
+			return
+		}
+	}
+
+	config.Handlers = append(config.Handlers, hc)
+	handlers = append(handlers, hc.Handler())
+
+	Info("New handler: ", hc)
+
 	http.Redirect(w, r, "/config", http.StatusFound)
 }
 
