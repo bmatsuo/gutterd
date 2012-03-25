@@ -373,7 +373,7 @@ func HandlerControllerCreate(w http.ResponseWriter, r *http.Request) {
 
 	for _, h := range config.Handlers {
 		if h.Name == hc.Name {
-			http.Error(w, "handler already exists with name "+hc.Name, http.StatusBadRequest)
+			http.Error(w, fmt.Sprintf("handler exists with name %q", hc.Name), http.StatusBadRequest)
 			return
 		}
 	}
