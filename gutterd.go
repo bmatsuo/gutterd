@@ -24,7 +24,6 @@ import (
 
 var (
 	config   *Config    // Deamon configuration.
-	watching []string   // Base-level directories to watch for torrents.
 	handlers []*Handler // The ordered set of torrent handlers.
 	opt      Options    // Command line options.
 )
@@ -99,8 +98,6 @@ func init() {
 
 	handlers = config.MakeHandlers()
 
-	watching = config.Watch
-
 	if opt.PollFrequency > 0 {
 		config.PollFrequency = opt.PollFrequency
 	}
@@ -155,6 +152,7 @@ func handleFile(path string) {
 		return
 	}
 	// Find the first handler matching the supplied torrent.
+	Info("matching torrent to handlers ", handlers)
 	for _, handler := range handlers {
 		if handler.Match(torrent) {
 			Printf("MATCH\t%s\t%s\t%s", torrent.Info.Name, handler.Name, handler.Watch)
@@ -168,28 +166,26 @@ func handleFile(path string) {
 	Print("NO MATCH\t", torrent.Info.Name)
 }
 
-func main() {
-	if len(watching) == 0 {
-		Fatal("Not watching any directories")
+// Attempt to handle .torrent files found in config.Watch directories.
+func pollWatch() (time.Duration, error) {
+	for _, watch := range config.Watch {
+		torrents, err := filepath.Glob(filepath.Join(watch, "*.torrent"))
+		if err != nil {
+			Error(err)
+			continue
+		}
+		for _, _torrent := range torrents {
+			handleFile(_torrent)
+			continue
+		}
 	}
+	return (time.Duration(config.PollFrequency) * time.Second), nil
+}
 
+func main() {
 	if config.HTTP != "" {
 		go ListenAndServe()
 	}
 
-	// Poll watch directories, handling all torrents found.
-	poll(pollFunc(func() (time.Duration, error) {
-		for _, watch := range watching {
-			torrents, err := filepath.Glob(filepath.Join(watch, "*.torrent"))
-			if err != nil {
-				Error(err)
-				continue
-			}
-			for _, _torrent := range torrents {
-				handleFile(_torrent)
-				continue
-			}
-		}
-		return (time.Duration(config.PollFrequency) * time.Second), nil
-	}))
+	poll(pollFunc(pollWatch))
 }
