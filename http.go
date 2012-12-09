@@ -364,7 +364,7 @@ func HandlerControllerNew(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandlerControllerCreate(w http.ResponseWriter, r *http.Request) {
-	var hc handler.HandlerConfig
+	var hc handler.Config
 	hc.Name = r.FormValue("name")
 	hc.Watch = r.FormValue("watch")
 	hc.Match.Tracker = r.FormValue("tracker")

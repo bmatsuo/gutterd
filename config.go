@@ -23,12 +23,12 @@ import (
 )
 
 type Config struct {
-	Path          string                  `json:"-"`             // The path of the config file.
-	HTTP          string                  `json:"http"`          // HTTP service address.
-	Logs          []log.Config             `json:"logs"`          // Log configurations.
-	Watch         []string                `json:"watch"`         // Incoming watch directories.
-	PollFrequency int64                   `json:"pollFrequency"` // Poll frequency in seconds.
-	Handlers      []handler.HandlerConfig `json:"handlers"`      // Ordered set of handlers.
+	Path          string           `json:"-"`             // The path of the config file.
+	HTTP          string           `json:"http"`          // HTTP service address.
+	Logs          []log.Config     `json:"logs"`          // Log configurations.
+	Watch         []string         `json:"watch"`         // Incoming watch directories.
+	PollFrequency int64            `json:"pollFrequency"` // Poll frequency in seconds.
+	Handlers      []handler.Config `json:"handlers"`      // Ordered set of handlers.
 }
 
 func (config Config) Validate() error {
