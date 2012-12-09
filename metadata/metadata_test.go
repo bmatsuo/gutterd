@@ -1,4 +1,4 @@
-package main
+package metadata
 
 /*  Filename:    metadata_test.go
  *  Author:      Bryan Matsuo <bmatsuo@soe.ucsc.edu>

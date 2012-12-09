@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package main
+package handler
 
 /*  Filename:    matcher.go
  *  Author:      Bryan Matsuo <bmatsuo@soe.ucsc.edu>
@@ -13,10 +13,12 @@ package main
 import (
 	"path/filepath"
 	"regexp"
+
+	"github.com/bmatsuo/gutterd/metadata"
 )
 
 // Matched against torrents (Metadata) by Handler types.
-type matcher struct {
+type Matcher struct {
 	Tracker  *regexp.Regexp
 	Basename *regexp.Regexp
 	Ext      *regexp.Regexp
@@ -24,7 +26,7 @@ type matcher struct {
 
 // Match a torrent against the patterns of m. If all non-nil patterns match the
 // corresponding fields in torrent, then the method returns true.
-func (m *matcher) Match(torrent *Metadata) bool {
+func (m *Matcher) Match(torrent *metadata.Metadata) bool {
 	if m.Tracker != nil {
 		if !m.Tracker.MatchString(torrent.Announce) {
 			return false
@@ -58,13 +60,3 @@ func (m *matcher) Match(torrent *Metadata) bool {
 	}
 	return true
 }
-
-// A Handler type's only function is to move matching torrents into
-// media-specific client watch directories.
-type Handler struct {
-	Name     string // Unique name for the Handler.
-	Watch    string // Destination for .torrent files (watched by a client).
-	*matcher        // Acts as a matcher.
-}
-
-func (h *Handler) String() string { return h.Name }

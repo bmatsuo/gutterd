@@ -20,12 +20,15 @@ import (
 	"strings"
 	"time"
 	"unicode"
+
+	"github.com/bmatsuo/gutterd/handler"
+	"github.com/bmatsuo/gutterd/metadata"
 )
 
 var (
-	config   *Config    // Deamon configuration.
-	handlers []*Handler // The ordered set of torrent handlers.
-	opt      Options    // Command line options.
+	config   *Config            // Deamon configuration.
+	handlers []*handler.Handler // The ordered set of torrent handlers.
+	opt      Options            // Command line options.
 )
 
 // Return from a pollFunc type to stop poll().
@@ -146,7 +149,7 @@ func init() {
 
 // Handle a .torrent file.
 func handleFile(path string) {
-	torrent, err := ReadMetadataFile(path)
+	torrent, err := metadata.ReadMetadataFile(path)
 	if err != nil {
 		Error(err)
 		return

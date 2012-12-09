@@ -11,7 +11,6 @@ package main
  */
 
 import (
-	"code.google.com/p/gorilla/mux"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -21,6 +20,10 @@ import (
 	"strconv"
 	"strings"
 	"unicode"
+
+	"github.com/gorilla/mux"
+
+	"github.com/bmatsuo/gutterd/handler"
 )
 
 type HTTPFormat uint
@@ -360,7 +363,7 @@ func HandlerControllerNew(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandlerControllerCreate(w http.ResponseWriter, r *http.Request) {
-	var hc HandlerConfig
+	var hc handler.HandlerConfig
 	hc.Name = r.FormValue("name")
 	hc.Watch = r.FormValue("watch")
 	hc.Match.Tracker = r.FormValue("tracker")

@@ -1,4 +1,4 @@
-package main
+package handler
 
 /*  Filename:    matcher_test.go
  *  Author:      Bryan Matsuo <bmatsuo@soe.ucsc.edu>
