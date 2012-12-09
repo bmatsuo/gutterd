@@ -48,10 +48,9 @@ func logNamesFromString(s string) []string {
 	names := make([]string, 0, len(namesraw))
 	for i := range namesraw {
 		name := strings.TrimFunc(namesraw[i], unicode.IsSpace)
-		if name == "" {
-			continue
+		if name != "" {
+			names = append(names, name)
 		}
-		names = append(names, name)
 	}
 	return names
 }
