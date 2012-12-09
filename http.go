@@ -23,6 +23,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/bmatsuo/gutterd/watcher"
 	"github.com/bmatsuo/gutterd/handler"
 	"github.com/bmatsuo/gutterd/log"
 )
@@ -324,7 +325,7 @@ func ConfigControllerWatchAdd(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	for _, _watch := range config.Watch {
-		watch, err := filepath.EvalSymlinks(_watch)
+		watch, err := filepath.EvalSymlinks(string(_watch))
 		if err != nil {
 			httpLogger.Error("Error evaluating symlinks: ", err)
 			http.Redirect(w, r, "/config", http.StatusNotFound)
@@ -337,7 +338,7 @@ func ConfigControllerWatchAdd(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	log.Notice("Watching directory: ", _path)
-	config.Watch = append(config.Watch, _path)
+	config.Watch = append(config.Watch, watcher.Config(_path))
 	http.Redirect(w, r, "/config", http.StatusFound)
 }
 

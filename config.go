@@ -20,13 +20,14 @@ import (
 
 	"github.com/bmatsuo/gutterd/handler"
 	"github.com/bmatsuo/gutterd/log"
+	"github.com/bmatsuo/gutterd/watcher"
 )
 
 type Config struct {
 	Path          string           `json:"-"`             // The path of the config file.
 	HTTP          string           `json:"http"`          // HTTP service address.
 	Logs          []log.Config     `json:"logs"`          // Log configurations.
-	Watch         []string         `json:"watch"`         // Incoming watch directories.
+	Watch         []watcher.Config `json:"watch"`         // Incoming watch directories.
 	PollFrequency int64            `json:"pollFrequency"` // Poll frequency in seconds.
 	Handlers      []handler.Config `json:"handlers"`      // Ordered set of handlers.
 }
@@ -35,13 +36,9 @@ func (config Config) Validate() error {
 	if config.Path == "" {
 		return errors.New("config: no path")
 	}
-	for _, watch := range config.Watch {
-		stat, err := os.Stat(watch)
-		if err != nil {
-			return err
-		}
-		if !stat.IsDir() {
-			return fmt.Errorf("config: watch is not a directory: %s", config.Watch)
+	for _, watcher := range config.Watch {
+		if err := watcher.Validate(); err != nil {
+			return fmt.Errorf("config: %v", err)
 		}
 	}
 	if config.PollFrequency <= 0 {

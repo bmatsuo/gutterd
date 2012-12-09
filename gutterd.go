@@ -173,7 +173,7 @@ func handleFile(path string) {
 // Attempt to handle .torrent files found in config.Watch directories.
 func pollWatch() (time.Duration, error) {
 	for _, watch := range config.Watch {
-		torrents, err := filepath.Glob(filepath.Join(watch, "*.torrent"))
+		torrents, err := filepath.Glob(filepath.Join(string(watch), "*.torrent"))
 		if err != nil {
 			log.Error(err)
 			continue
