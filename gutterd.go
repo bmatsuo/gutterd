@@ -12,45 +12,28 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	l "log"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
-	"time"
 	"unicode"
 
+	"github.com/howeyc/fsnotify"
+
 	"github.com/bmatsuo/gutterd/handler"
-	"github.com/bmatsuo/gutterd/metadata"
 	"github.com/bmatsuo/gutterd/log"
+	"github.com/bmatsuo/gutterd/metadata"
+	"github.com/bmatsuo/gutterd/watcher"
 )
 
 var (
 	config   *Config            // Deamon configuration.
 	handlers []*handler.Handler // The ordered set of torrent handlers.
 	opt      Options            // Command line options.
+	fs       *watcher.Watcher   // Filesystem event watcher
 )
-
-// Return from a pollFunc type to stop poll().
-var ErrPollStop = fmt.Errorf("STOP POLLING")
-
-// A function that can be used polling.
-type pollFunc func() (time.Duration, error)
-
-// Repeatedly call fn until ErrPollStop is returned.
-func poll(fn pollFunc) {
-	for cont := true; cont; {
-		switch d, err := fn(); err {
-		case nil:
-			time.Sleep(d)
-		case ErrPollStop:
-			cont = false
-		default:
-			log.Error(err)
-		}
-	}
-}
 
 func HomeDirectory() (home string, err error) {
 	if home = os.Getenv("HOME"); home == "" {
@@ -85,7 +68,6 @@ func init() {
 	// Read the deamon configuration.
 	var err error
 	defconfig := &Config{
-		PollFrequency: 60,
 		Logs: []log.Config{
 			{"&2", []string{"gutterd", "http"}},
 		},
@@ -101,10 +83,6 @@ func init() {
 	}
 
 	handlers = config.MakeHandlers()
-
-	if opt.PollFrequency > 0 {
-		config.PollFrequency = opt.PollFrequency
-	}
 
 	if opt.Watch != nil {
 		config.Watch = opt.Watch
@@ -170,26 +148,36 @@ func handleFile(path string) {
 	log.Print("NO MATCH\t", torrent.Info.Name)
 }
 
-// Attempt to handle .torrent files found in config.Watch directories.
-func pollWatch() (time.Duration, error) {
-	for _, watch := range config.Watch {
-		torrents, err := filepath.Glob(filepath.Join(string(watch), "*.torrent"))
-		if err != nil {
-			log.Error(err)
-			continue
-		}
-		for _, _torrent := range torrents {
-			handleFile(_torrent)
-			continue
-		}
+func signalHandler() {
+	sig := make(chan os.Signal, 2)
+	signal.Notify(sig, os.Kill, os.Interrupt)
+	for _ = range sig {
+		fs.Close()
 	}
-	return (time.Duration(config.PollFrequency) * time.Second), nil
+}
+
+func fsInit() (err error) {
+	fs, err = watcher.New(func(event *fsnotify.FileEvent) bool {
+		return event.IsCreate() && strings.HasSuffix(event.Name, ".torrent")
+	})
+	if err != nil {
+		return
+	}
+	if err = fs.Watch(config.Watch...); err != nil {
+		return
+	}
+	return
 }
 
 func main() {
 	if config.HTTP != "" {
 		go ListenAndServe()
 	}
-
-	poll(pollFunc(pollWatch))
+	if err := fsInit(); err != nil {
+		log.Error(err)
+		os.Exit(1)
+	}
+	for event := range fs.Event {
+		handleFile(event.Name)
+	}
 }
