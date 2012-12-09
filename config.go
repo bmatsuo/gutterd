@@ -19,17 +19,13 @@ import (
 	"strconv"
 
 	"github.com/bmatsuo/gutterd/handler"
+	"github.com/bmatsuo/gutterd/log"
 )
-
-type LogConfig struct {
-	Path    string   `json:"path"`    // Log output path (&2/&1 for stderr/stdout).
-	Accepts []string `json:"accepts"` // Names logs accepted ("gutterd", "http", ...).
-}
 
 type Config struct {
 	Path          string                  `json:"-"`             // The path of the config file.
 	HTTP          string                  `json:"http"`          // HTTP service address.
-	Logs          []LogConfig             `json:"logs"`          // Log configurations.
+	Logs          []log.Config             `json:"logs"`          // Log configurations.
 	Watch         []string                `json:"watch"`         // Incoming watch directories.
 	PollFrequency int64                   `json:"pollFrequency"` // Poll frequency in seconds.
 	Handlers      []handler.HandlerConfig `json:"handlers"`      // Ordered set of handlers.

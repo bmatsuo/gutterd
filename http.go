@@ -24,6 +24,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/bmatsuo/gutterd/handler"
+	"github.com/bmatsuo/gutterd/log"
 )
 
 type HTTPFormat uint
@@ -34,13 +35,13 @@ const (
 	Hinvalid
 )
 
-var httpLogger Logger
+var httpLogger log.Logger
 
 func _initHTTP() {
-	if loggerMux == nil {
+	if log.DefaultLoggerMux == nil {
 		panic("nil mux")
 	}
-	httpLogger = loggerMux.NewSource("http")
+	httpLogger = log.DefaultLoggerMux.NewSource("http")
 }
 
 func HTTPRequestFormat(r *http.Request) HTTPFormat {
@@ -288,7 +289,7 @@ func ConfigControllerPollUpdate(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/config", http.StatusFound)
 		return
 	}
-	Noticef("Updating poll frequency : %d", freq)
+	log.Noticef("Updating poll frequency : %d", freq)
 	config.PollFrequency = freq
 	http.Redirect(w, r, "/config", http.StatusFound)
 }
@@ -335,7 +336,7 @@ func ConfigControllerWatchAdd(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	Notice("Watching directory: ", _path)
+	log.Notice("Watching directory: ", _path)
 	config.Watch = append(config.Watch, _path)
 	http.Redirect(w, r, "/config", http.StatusFound)
 }
@@ -349,7 +350,7 @@ func ConfigControllerWatchDelete(w http.ResponseWriter, r *http.Request) {
 	if i >= len(config.Watch) {
 		http.Redirect(w, r, "/config", http.StatusNotFound)
 	}
-	Notice("No longer watching directory: ", config.Watch[i])
+	log.Notice("No longer watching directory: ", config.Watch[i])
 	config.Watch = append(config.Watch[:i], config.Watch[i+1:]...)
 	http.Redirect(w, r, "/config", http.StatusFound)
 }
@@ -384,7 +385,7 @@ func HandlerControllerCreate(w http.ResponseWriter, r *http.Request) {
 	config.Handlers = append(config.Handlers, hc)
 	handlers = append(handlers, hc.Handler())
 
-	Info("New handler: ", hc)
+	log.Info("New handler: ", hc)
 
 	http.Redirect(w, r, "/config", http.StatusFound)
 }
@@ -409,7 +410,7 @@ func HandlerControllerDelete(w http.ResponseWriter, r *http.Request) {
 	handlers = append(handlers[:hIndex], handlers[hIndex+1:]...)
 	config.Handlers = append(config.Handlers[:hIndex], config.Handlers[hIndex+1:]...)
 
-	Info("Deleted handler: ", h)
+	log.Info("Deleted handler: ", h)
 
 	http.Redirect(w, r, "/config", http.StatusFound)
 }
@@ -435,7 +436,7 @@ func HandlerControllerUp(w http.ResponseWriter, r *http.Request) {
 	for i := range config.Handlers {
 		handlerNames[i] = config.Handlers[i].Name
 	}
-	Notice("New handler order: ", handlerNames)
+	log.Notice("New handler order: ", handlerNames)
 
 	http.Redirect(w, r, "/config", http.StatusFound)
 }
@@ -461,7 +462,7 @@ func HandlerControllerDown(w http.ResponseWriter, r *http.Request) {
 	for i := range config.Handlers {
 		handlerNames[i] = config.Handlers[i].Name
 	}
-	Info("New handler order: ", handlerNames)
+	log.Info("New handler order: ", handlerNames)
 	http.Redirect(w, r, "/config", http.StatusFound)
 }
 

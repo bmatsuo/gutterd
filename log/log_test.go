@@ -1,4 +1,4 @@
-package main
+package log
 
 /*  Filename:    log_test.go
  *  Author:      Bryan Matsuo <bmatsuo@soe.ucsc.edu>

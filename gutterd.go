@@ -14,7 +14,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
+	l "log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -23,6 +23,7 @@ import (
 
 	"github.com/bmatsuo/gutterd/handler"
 	"github.com/bmatsuo/gutterd/metadata"
+	"github.com/bmatsuo/gutterd/log"
 )
 
 var (
@@ -46,7 +47,7 @@ func poll(fn pollFunc) {
 		case ErrPollStop:
 			cont = false
 		default:
-			Error(err)
+			log.Error(err)
 		}
 	}
 }
@@ -74,10 +75,10 @@ func logNamesFromString(s string) []string {
 
 // Read the config file and setup global variables.
 func init() {
-	loggerMux = new(LoggerMux)
-	DefaultLogger = loggerMux.NewSource("gutterd")
-	initLogger := log.New(os.Stderr, "", 0)
-	loggerMux.NewSink(initLogger, "gutterd")
+	log.DefaultLoggerMux = new(log.LoggerMux)
+	log.DefaultLogger = log.DefaultLoggerMux.NewSource("gutterd")
+	initLogger := l.New(os.Stderr, "", 0)
+	log.DefaultLoggerMux.NewSink(initLogger, "gutterd")
 
 	opt = parseFlags()
 
@@ -85,18 +86,18 @@ func init() {
 	var err error
 	defconfig := &Config{
 		PollFrequency: 60,
-		Logs: []LogConfig{
+		Logs: []log.Config{
 			{"&2", []string{"gutterd", "http"}},
 		},
 	}
 	if opt.ConfigPath != "" {
 		if config, err = LoadConfig(opt.ConfigPath, defconfig); err != nil {
-			Fatal("Couldn't load configuration: ", err)
+			log.Fatal("Couldn't load configuration: ", err)
 		}
 	} else if home, err := HomeDirectory(); err != nil {
-		Fatal(err)
+		log.Fatal(err)
 	} else if config, err = LoadConfig(home+"/.config/gutterd.json", defconfig); err != nil {
-		Fatal("Couldn't load configuration: ", err)
+		log.Fatal("Couldn't load configuration: ", err)
 	}
 
 	handlers = config.MakeHandlers()
@@ -122,9 +123,9 @@ func init() {
 		if len(accepts) == 0 {
 			accepts = defconfig.Logs[0].Accepts
 		}
-		config.Logs = []LogConfig{{opt.LogPath, accepts}}
+		config.Logs = []log.Config{{opt.LogPath, accepts}}
 	} else if accepts := logNamesFromString(opt.LogAccepts); len(accepts) > 0 {
-		config.Logs = []LogConfig{{defconfig.Logs[0].Path, accepts}}
+		config.Logs = []log.Config{{defconfig.Logs[0].Path, accepts}}
 	}
 	for _, logConfig := range config.Logs {
 		var logfile io.Writer
@@ -138,35 +139,35 @@ func init() {
 		default:
 			logfile, err = os.OpenFile(logConfig.Path, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 			if err != nil {
-				Fatalf("Couldn't open log file: %s", logConfig.Path)
+				log.Fatalf("Couldn't open log file: %s", logConfig.Path)
 			}
 		}
-		loggerMux.NewSink(log.New(logfile, "", log.LstdFlags), logConfig.Accepts...)
+		log.DefaultLoggerMux.NewSink(l.New(logfile, "", l.LstdFlags), logConfig.Accepts...)
 	}
 
-	loggerMux.RemoveSink(initLogger)
+	log.DefaultLoggerMux.RemoveSink(initLogger)
 }
 
 // Handle a .torrent file.
 func handleFile(path string) {
 	torrent, err := metadata.ReadMetadataFile(path)
 	if err != nil {
-		Error(err)
+		log.Error(err)
 		return
 	}
 	// Find the first handler matching the supplied torrent.
-	Info("matching torrent to handlers ", handlers)
+	log.Info("matching torrent to handlers ", handlers)
 	for _, handler := range handlers {
 		if handler.Match(torrent) {
-			Printf("MATCH\t%s\t%s\t%s", torrent.Info.Name, handler.Name, handler.Watch)
+			log.Printf("MATCH\t%s\t%s\t%s", torrent.Info.Name, handler.Name, handler.Watch)
 			mvpath := filepath.Join(handler.Watch, filepath.Base(path))
 			if err := os.Rename(path, mvpath); err != nil {
-				Error(err)
+				log.Error(err)
 			}
 			return
 		}
 	}
-	Print("NO MATCH\t", torrent.Info.Name)
+	log.Print("NO MATCH\t", torrent.Info.Name)
 }
 
 // Attempt to handle .torrent files found in config.Watch directories.
@@ -174,7 +175,7 @@ func pollWatch() (time.Duration, error) {
 	for _, watch := range config.Watch {
 		torrents, err := filepath.Glob(filepath.Join(watch, "*.torrent"))
 		if err != nil {
-			Error(err)
+			log.Error(err)
 			continue
 		}
 		for _, _torrent := range torrents {

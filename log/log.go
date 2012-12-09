@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package main
+package log
 
 /*  Filename:    log.go
  *  Author:      Bryan Matsuo <bmatsuo@soe.ucsc.edu>
@@ -16,7 +16,7 @@ import (
 	"os"
 )
 
-var loggerMux *LoggerMux
+var DefaultLoggerMux *LoggerMux
 var DefaultLogger Logger
 
 func Output(calldepth int, s string) error      { return DefaultLogger.Output(calldepth+1, s) }
