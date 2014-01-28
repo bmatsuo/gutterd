@@ -20,6 +20,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/cactus/go-statsd-client/statsd"
 	"github.com/howeyc/fsnotify"
 
 	"github.com/bmatsuo/gutterd/handler"
@@ -33,6 +34,7 @@ var (
 	handlers []*handler.Handler // The ordered set of torrent handlers.
 	opt      Options            // Command line options.
 	fs       *watcher.Watcher   // Filesystem event watcher
+	stat     *statsd.Client     // Statsd
 )
 
 func HomeDirectory() (home string, err error) {
@@ -81,6 +83,19 @@ func init() {
 		log.Fatal("Couldn't load configuration: ", err)
 	}
 
+	if config.Statsd != "" {
+		addr := strings.SplitN(config.Statsd, ":", 2)
+		if len(addr) < 2 {
+			panic("missing ':' in statsd address")
+		}
+		stat, err = statsd.New(addr[0], addr[1])
+		if err != nil {
+			log.Printf("warning: could not initialize statsd client; %v", err)
+			stat = nil
+		}
+		stat.Inc("gutterd.proc.start", 1, 1)
+	}
+
 	handlers = config.MakeHandlers()
 
 	if opt.Watch != nil {
@@ -123,12 +138,16 @@ func init() {
 	}
 
 	log.DefaultLoggerMux.RemoveSink(initLogger)
+	stat.Inc("gutterd.proc.boot", 1, 1)
 }
 
 // Handle a .torrent file.
 func handleFile(path string) {
 	torrent, err := metadata.ReadMetadataFile(path)
 	if err != nil {
+		if stat != nil {
+			stat.Inc("gutterd.torrent.error", 1, 1)
+		}
 		log.Error(err)
 		return
 	}
@@ -136,6 +155,10 @@ func handleFile(path string) {
 	log.Info("matching torrent to handlers ", handlers)
 	for _, handler := range handlers {
 		if handler.Match(torrent) {
+			if stat != nil {
+				name := "gutterd.torrent.match." + handler.Name
+				stat.Inc(name, 1, 1)
+			}
 			log.Printf("MATCH\t%s\t%s\t%s", torrent.Info.Name, handler.Name, handler.Watch)
 			mvpath := filepath.Join(handler.Watch, filepath.Base(path))
 			if err := os.Rename(path, mvpath); err != nil {
@@ -143,6 +166,9 @@ func handleFile(path string) {
 			}
 			return
 		}
+	}
+	if stat != nil {
+		stat.Inc("gutterd.torrent.no-match", 1, 1)
 	}
 	log.Print("NO MATCH\t", torrent.Info.Name)
 }

@@ -7,7 +7,7 @@ package main
 /*  Filename:    config.go
  *  Author:      Bryan Matsuo <bmatsuo@soe.ucsc.edu>
  *  Created:     2012-03-04 19:23:27.544554 -0800 PST
- *  Description: 
+ *  Description:
  */
 
 import (
@@ -26,6 +26,7 @@ import (
 type Config struct {
 	Path          string           `json:"-"`             // The path of the config file.
 	HTTP          string           `json:"http"`          // HTTP service address.
+	Statsd        string           `json:"statsd"`        // address of statsd
 	Logs          []log.Config     `json:"logs"`          // Log configurations.
 	Watch         []watcher.Config `json:"watch"`         // Incoming watch directories.
 	PollFrequency int64            `json:"pollFrequency"` // Poll frequency in seconds.
@@ -49,6 +50,7 @@ func (config Config) Validate() error {
 			return fmt.Errorf("config: %v", err)
 		}
 	}
+	// TODO validate Statsd
 	return nil
 }
 
