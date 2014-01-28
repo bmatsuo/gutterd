@@ -138,7 +138,9 @@ func init() {
 	}
 
 	log.DefaultLoggerMux.RemoveSink(initLogger)
-	stat.Inc("gutterd.proc.boot", 1, 1)
+	if stat != nil {
+		stat.Inc("gutterd.proc.boot", 1, 1)
+	}
 }
 
 // Handle a .torrent file.
