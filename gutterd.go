@@ -16,7 +16,6 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strings"
-	"unicode"
 
 	"github.com/golang/glog"
 	"github.com/howeyc/fsnotify"
@@ -30,7 +29,7 @@ import (
 var (
 	config   *Config            // Deamon configuration.
 	handlers []*handler.Handler // The ordered set of torrent handlers.
-	opt      Options            // Command line options.
+	opt      *Options           // Command line options.
 	fs       *watcher.Watcher   // Filesystem event watcher
 )
 
@@ -41,34 +40,23 @@ func HomeDirectory() (home string, err error) {
 	return
 }
 
-func logNamesFromString(s string) []string {
-	accepts := strings.TrimFunc(s, unicode.IsSpace)
-	namesraw := strings.Split(accepts, ",")
-	names := make([]string, 0, len(namesraw))
-	for i := range namesraw {
-		name := strings.TrimFunc(namesraw[i], unicode.IsSpace)
-		if name != "" {
-			names = append(names, name)
-		}
-	}
-	return names
-}
-
 // Read the config file and setup global variables.
 func init() {
 	opt = parseFlags()
 
-	// Read the deamon configuration.
+	// Read the deamon configuration. flag overrides default (~/.config/gutterd.json)
 	var err error
 	defconfig := &Config{}
-	if opt.ConfigPath != "" {
-		if config, err = LoadConfig(opt.ConfigPath, defconfig); err != nil {
-			glog.Fatalf("Couldn't load configuration: %v", err)
+	configPath := opt.ConfigPath
+	if configPath == "" {
+		home, err := HomeDirectory()
+		if err != nil {
+			glog.Fatalf("unable to locate home directory: %v", err)
 		}
-	} else if home, err := HomeDirectory(); err != nil {
-		glog.Fatal(err)
-	} else if config, err = LoadConfig(home+"/.config/gutterd.json", defconfig); err != nil {
-		glog.Fatalf("Couldn't load configuration: %v", err)
+		configPath = filepath.Join(home, ".config", "gutterd.json")
+	}
+	if config, err = LoadConfig(configPath, defconfig); err != nil {
+		glog.Fatalf("unable to load configuration: %v", err)
 	}
 
 	if config.Statsd != "" {
@@ -81,10 +69,10 @@ func init() {
 
 	handlers = config.MakeHandlers()
 
+	// command line flag overrides
 	if opt.Watch != nil {
 		config.Watch = opt.Watch
 	}
-
 	if opt.HTTP != "" {
 		config.HTTP = opt.HTTP
 	}

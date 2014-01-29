@@ -44,8 +44,6 @@ func setupFlags(opt *Options) *flag.FlagSet {
 	fs.StringVar(&opt.HTTP, "http", "", "Address to serve web requests from (e.g. ':6060').")
 	fs.StringVar(&opt.watchStr, "watch", "", "Specify a set of directories to watch.")
 	fs.StringVar(&opt.ConfigPath, "config", "", "A config file to use instead of ~/.config/gutterd.json.")
-	fs.StringVar(&opt.LogPath, "log", "", "Log output path.")
-	fs.StringVar(&opt.LogAccepts, "log-accepts", "", "Comma separated list of logs (e.g. 'gutterd,http').")
 	return setupUsage(fs)
 }
 
@@ -90,11 +88,9 @@ func setupUsage(fs *flag.FlagSet) *flag.FlagSet {
 }
 
 //  Parse the flags, validate them, and post-process (e.g. Initialize more complex structs).
-func parseFlags() Options {
-	var opt Options
-	fs := setupFlags(&opt)
-	fs.Parse(os.Args[1:])
-	verifyFlags(&opt, fs)
-	// Process the verified Options...
+func parseFlags() *Options {
+	opt := new(Options)
+	setupFlags(opt)
+	flag.Parse()
 	return opt
 }
