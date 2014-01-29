@@ -19,7 +19,6 @@ import (
 	"strconv"
 
 	"github.com/bmatsuo/gutterd/handler"
-	"github.com/bmatsuo/gutterd/log"
 	"github.com/bmatsuo/gutterd/watcher"
 )
 
@@ -27,7 +26,6 @@ type Config struct {
 	Path          string           `json:"-"`             // The path of the config file.
 	HTTP          string           `json:"http"`          // HTTP service address.
 	Statsd        string           `json:"statsd"`        // address of statsd
-	Logs          []log.Config     `json:"logs"`          // Log configurations.
 	Watch         []watcher.Config `json:"watch"`         // Incoming watch directories.
 	PollFrequency int64            `json:"pollFrequency"` // Poll frequency in seconds.
 	Handlers      []handler.Config `json:"handlers"`      // Ordered set of handlers.

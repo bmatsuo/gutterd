@@ -7,7 +7,7 @@ package main
 /*  Filename:    http.go
  *  Author:      Bryan Matsuo <bmatsuo@soe.ucsc.edu>
  *  Created:     2012-03-11 16:24:28.171009 -0700 PDT
- *  Description: 
+ *  Description:
  */
 
 import (
@@ -19,13 +19,14 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 	"unicode"
 
+	"github.com/golang/glog"
 	"github.com/gorilla/mux"
 
-	"github.com/bmatsuo/gutterd/watcher"
 	"github.com/bmatsuo/gutterd/handler"
-	"github.com/bmatsuo/gutterd/log"
+	"github.com/bmatsuo/gutterd/watcher"
 )
 
 type HTTPFormat uint
@@ -35,15 +36,6 @@ const (
 	Hjson
 	Hinvalid
 )
-
-var httpLogger log.Logger
-
-func _initHTTP() {
-	if log.DefaultLoggerMux == nil {
-		panic("nil mux")
-	}
-	httpLogger = log.DefaultLoggerMux.NewSource("http")
-}
 
 func HTTPRequestFormat(r *http.Request) HTTPFormat {
 	if format := mux.Vars(r)["format"]; format != "" {
@@ -274,23 +266,24 @@ func ConfigControllerShow(w http.ResponseWriter, r *http.Request) {
 func ConfigControllerPollUpdate(w http.ResponseWriter, r *http.Request) {
 	_delta := r.FormValue("delta")
 	if _delta == "" {
-		httpLogger.Info("No pollFrequency delta")
+		glog.Info("[http] no pollFrequency delta")
 		http.Redirect(w, r, "/config", http.StatusFound)
 		return
 	}
 	delta, err := strconv.ParseInt(_delta, 10, 64)
 	if err != nil {
-		httpLogger.Info("Error parsing delta: ", err)
+		glog.Infof("[http] error parsing delta: %v", err)
 		http.Redirect(w, r, "/config", http.StatusFound)
 		return
 	}
 	freq := config.PollFrequency + delta
 	if freq < 0 {
-		httpLogger.Info("Negative frequency: ", freq)
+		glog.Infof("[http] negative frequency: ", freq)
 		http.Redirect(w, r, "/config", http.StatusFound)
 		return
 	}
-	log.Noticef("Updating poll frequency : %d", freq)
+
+	glog.Infof("updating poll frequency : %d", freq)
 	config.PollFrequency = freq
 	http.Redirect(w, r, "/config", http.StatusFound)
 }
@@ -298,46 +291,47 @@ func ConfigControllerPollUpdate(w http.ResponseWriter, r *http.Request) {
 func ConfigControllerWatchAdd(w http.ResponseWriter, r *http.Request) {
 	_path := strings.TrimFunc(r.FormValue("watch"), unicode.IsSpace)
 	if _path == "" {
-		httpLogger.Error("No 'watch' specified.")
+		glog.Warning("[http] no 'watch' specified.")
 		http.Redirect(w, r, "/config", http.StatusFound)
 		return
 	}
 	if !strings.HasPrefix(_path, "/") {
-		httpLogger.Error("Non-absolute path specified.")
+		glog.Warning("[http] non-absolute path specified.")
 		http.Redirect(w, r, "/config", http.StatusFound)
 		return
 	}
 	path, err := filepath.EvalSymlinks(_path)
 	if err != nil {
-		httpLogger.Error("Error evaluating symlinks: ", err)
+		glog.Warning("[http] error evaluating symlinks: ", err)
 		http.Redirect(w, r, "/config", http.StatusNotFound)
 		return
 	}
 	stat, err := os.Stat(path)
 	if err != nil {
-		httpLogger.Error("Cannot stat: ", err)
+		glog.Warningf("[http] cannot stat: %v", err)
 		http.Redirect(w, r, "/config", http.StatusNotFound)
 		return
 	}
 	if !stat.IsDir() {
-		httpLogger.Error("Not a directory: ", _path)
+		glog.Warningf("[http] not a directory: %v", _path)
 		http.Redirect(w, r, "/config", http.StatusNotFound)
 		return
 	}
 	for _, _watch := range config.Watch {
 		watch, err := filepath.EvalSymlinks(string(_watch))
 		if err != nil {
-			httpLogger.Error("Error evaluating symlinks: ", err)
+			glog.Warningf("[http] error evaluating symlinks: %v", err)
 			http.Redirect(w, r, "/config", http.StatusNotFound)
 			return
 		}
 		if watch == path {
-			httpLogger.Error("Already watching: ", _path)
+			glog.Warningf("[http] already watching: %v", _path)
 			http.Redirect(w, r, "/config", http.StatusNotFound)
 			return
 		}
 	}
-	log.Notice("Watching directory: ", _path)
+
+	glog.Warningf("watching directory: %v", _path)
 	config.Watch = append(config.Watch, watcher.Config(_path))
 	http.Redirect(w, r, "/config", http.StatusFound)
 }
@@ -351,7 +345,8 @@ func ConfigControllerWatchDelete(w http.ResponseWriter, r *http.Request) {
 	if i >= len(config.Watch) {
 		http.Redirect(w, r, "/config", http.StatusNotFound)
 	}
-	log.Notice("No longer watching directory: ", config.Watch[i])
+
+	glog.Warningf("no longer watching directory: %v", config.Watch[i])
 	config.Watch = append(config.Watch[:i], config.Watch[i+1:]...)
 	http.Redirect(w, r, "/config", http.StatusFound)
 }
@@ -386,7 +381,7 @@ func HandlerControllerCreate(w http.ResponseWriter, r *http.Request) {
 	config.Handlers = append(config.Handlers, hc)
 	handlers = append(handlers, hc.Handler())
 
-	log.Info("New handler: ", hc)
+	glog.Infof("created handler: %v", hc)
 
 	http.Redirect(w, r, "/config", http.StatusFound)
 }
@@ -411,7 +406,7 @@ func HandlerControllerDelete(w http.ResponseWriter, r *http.Request) {
 	handlers = append(handlers[:hIndex], handlers[hIndex+1:]...)
 	config.Handlers = append(config.Handlers[:hIndex], config.Handlers[hIndex+1:]...)
 
-	log.Info("Deleted handler: ", h)
+	glog.Warningf("deleted handler: %v", h)
 
 	http.Redirect(w, r, "/config", http.StatusFound)
 }
@@ -437,7 +432,7 @@ func HandlerControllerUp(w http.ResponseWriter, r *http.Request) {
 	for i := range config.Handlers {
 		handlerNames[i] = config.Handlers[i].Name
 	}
-	log.Notice("New handler order: ", handlerNames)
+	glog.Warningf("new handler order: %v", handlerNames)
 
 	http.Redirect(w, r, "/config", http.StatusFound)
 }
@@ -463,7 +458,7 @@ func HandlerControllerDown(w http.ResponseWriter, r *http.Request) {
 	for i := range config.Handlers {
 		handlerNames[i] = config.Handlers[i].Name
 	}
-	log.Info("New handler order: ", handlerNames)
+	glog.Infof("new handler order: %v", handlerNames)
 	http.Redirect(w, r, "/config", http.StatusFound)
 }
 
@@ -502,7 +497,10 @@ func ListenAndServe() {
 	router.HandleFunc(`/config{format:(\.(json|html))?}`, ConfigControllerShow).
 		Methods("GET")
 	http.ListenAndServe(config.HTTP, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		httpLogger.Infof("Request\t%v\t%v", r.Method, r.URL.Path)
+		start := time.Now()
 		router.ServeHTTP(w, r)
+		dur := time.Since(start)
+		glog.Infof("[http] request %v %v %v %dms",
+			r.Method, r.URL, r.Proto, dur/time.Millisecond)
 	}))
 }

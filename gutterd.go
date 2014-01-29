@@ -12,18 +12,16 @@ package main
 
 import (
 	"errors"
-	"io"
-	l "log"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"strings"
 	"unicode"
 
+	"github.com/golang/glog"
 	"github.com/howeyc/fsnotify"
 
 	"github.com/bmatsuo/gutterd/handler"
-	"github.com/bmatsuo/gutterd/log"
 	"github.com/bmatsuo/gutterd/metadata"
 	"github.com/bmatsuo/gutterd/statsd"
 	"github.com/bmatsuo/gutterd/watcher"
@@ -58,34 +56,25 @@ func logNamesFromString(s string) []string {
 
 // Read the config file and setup global variables.
 func init() {
-	log.DefaultLoggerMux = new(log.LoggerMux)
-	log.DefaultLogger = log.DefaultLoggerMux.NewSource("gutterd")
-	initLogger := l.New(os.Stderr, "", 0)
-	log.DefaultLoggerMux.NewSink(initLogger, "gutterd")
-
 	opt = parseFlags()
 
 	// Read the deamon configuration.
 	var err error
-	defconfig := &Config{
-		Logs: []log.Config{
-			{"&2", []string{"gutterd", "http"}},
-		},
-	}
+	defconfig := &Config{}
 	if opt.ConfigPath != "" {
 		if config, err = LoadConfig(opt.ConfigPath, defconfig); err != nil {
-			log.Fatal("Couldn't load configuration: ", err)
+			glog.Fatalf("Couldn't load configuration: %v", err)
 		}
 	} else if home, err := HomeDirectory(); err != nil {
-		log.Fatal(err)
+		glog.Fatal(err)
 	} else if config, err = LoadConfig(home+"/.config/gutterd.json", defconfig); err != nil {
-		log.Fatal("Couldn't load configuration: ", err)
+		glog.Fatalf("Couldn't load configuration: %v", err)
 	}
 
 	if config.Statsd != "" {
 		err := statsd.Init(config.Statsd, "gutterd")
 		if err != nil {
-			log.Printf("warning: could not initialize statsd client; %v", err)
+			glog.Warningf("statsd init error (no stats will be recorded); %v", err)
 		}
 		statsd.Incr("proc.start", 1, 1)
 	}
@@ -99,39 +88,7 @@ func init() {
 	if opt.HTTP != "" {
 		config.HTTP = opt.HTTP
 	}
-	if config.HTTP != "" {
-		_initHTTP()
-	}
 
-	// Setup logging destinations.
-	if opt.LogPath != "" {
-		accepts := logNamesFromString(opt.LogAccepts)
-		if len(accepts) == 0 {
-			accepts = defconfig.Logs[0].Accepts
-		}
-		config.Logs = []log.Config{{opt.LogPath, accepts}}
-	} else if accepts := logNamesFromString(opt.LogAccepts); len(accepts) > 0 {
-		config.Logs = []log.Config{{defconfig.Logs[0].Path, accepts}}
-	}
-	for _, logConfig := range config.Logs {
-		var logfile io.Writer
-		switch logConfig.Path {
-		case "":
-			fallthrough
-		case "&2":
-			logfile = os.Stderr
-		case "&1":
-			logfile = os.Stdout
-		default:
-			logfile, err = os.OpenFile(logConfig.Path, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-			if err != nil {
-				log.Fatalf("Couldn't open log file: %s", logConfig.Path)
-			}
-		}
-		log.DefaultLoggerMux.NewSink(l.New(logfile, "", l.LstdFlags), logConfig.Accepts...)
-	}
-
-	log.DefaultLoggerMux.RemoveSink(initLogger)
 	statsd.Incr("proc.boot", 1, 1)
 }
 
@@ -140,25 +97,30 @@ func handleFile(path string) {
 	torrent, err := metadata.ReadMetadataFile(path)
 	if err != nil {
 		statsd.Incr("torrent.error", 1, 1)
-		log.Error(err)
+		glog.Errorf("error reading torrent (%q); %v", path, err)
 		return
 	}
 	// Find the first handler matching the supplied torrent.
-	log.Info("matching torrent to handlers ", handlers)
 	for _, handler := range handlers {
 		if handler.Match(torrent) {
 			name := "torrent.match." + handler.Name
 			statsd.Incr(name, 1, 1)
-			log.Printf("MATCH\t%s\t%s\t%s", torrent.Info.Name, handler.Name, handler.Watch)
+			glog.Infof("match file:%q handler:%q watch:%q",
+				torrent.Info.Name,
+				handler.Name,
+				handler.Watch,
+			)
 			mvpath := filepath.Join(handler.Watch, filepath.Base(path))
 			if err := os.Rename(path, mvpath); err != nil {
-				log.Error(err)
+				// TODO id associated with the match
+				// XXX can i get the filename here?
+				glog.Error("watch import failed (%q); %v", torrent.Info.Name, err)
 			}
 			return
 		}
 	}
 	statsd.Incr("torrent.no-match", 1, 1)
-	log.Print("NO MATCH\t", torrent.Info.Name)
+	glog.Warningf("no handler matched torrent: %q", torrent.Info.Name)
 }
 
 func signalHandler() {
@@ -177,7 +139,7 @@ func fsInit() (err error) {
 		},
 		func(err error) {
 			statsd.Incr("watcher.fs.errors", 1, 1)
-			log.Printf("watcher error: %v", err)
+			glog.Warningf("watcher error: %v", err)
 		})
 	if err != nil {
 		return
@@ -193,9 +155,10 @@ func fsInit() (err error) {
 func main() {
 	if config.HTTP != "" {
 		go ListenAndServe()
+		glog.Infof("serving http at %v", config.HTTP)
 	}
 	if err := fsInit(); err != nil {
-		log.Error(err)
+		glog.Error("error initializing file system watcher; %v", err)
 		os.Exit(1)
 	}
 	for event := range fs.Event {
