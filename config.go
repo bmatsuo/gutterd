@@ -84,13 +84,13 @@ func loadConfigFromBytes(p []byte, path string, defaults *Config) (config *Confi
 func LoadConfig(path string, defaults *Config) (*Config, error) {
 	if _, err := os.Stat(path); err != nil {
 		if os.IsNotExist(err) {
-			return config, nil
+			return defaults, nil
 		}
-		return config, err
+		return nil, err
 	}
 	p, err := ioutil.ReadFile(path)
 	if err != nil {
-		return config, fmt.Errorf("read error: %v", err)
+		return nil, fmt.Errorf("read error: %v", err)
 	}
 	config, err := loadConfigFromBytes(p, path, defaults)
 	if err != nil {
