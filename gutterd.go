@@ -11,7 +11,7 @@ package main
  */
 
 import (
-	"errors"
+	"fmt"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -35,7 +35,7 @@ var (
 
 func HomeDirectory() (home string, err error) {
 	if home = os.Getenv("HOME"); home == "" {
-		err = errors.New("Environment variable HOME not set.")
+		err = fmt.Errorf("HOME is not set")
 	}
 	return
 }
@@ -100,8 +100,6 @@ func handleFile(path string) {
 			)
 			mvpath := filepath.Join(handler.Watch, filepath.Base(path))
 			if err := os.Rename(path, mvpath); err != nil {
-				// TODO id associated with the match
-				// XXX can i get the filename here?
 				glog.Error("watch import failed (%q); %v", torrent.Info.Name, err)
 			}
 			return
