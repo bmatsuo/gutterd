@@ -84,16 +84,12 @@ func init() {
 	}
 
 	if config.Statsd != "" {
-		addr := strings.SplitN(config.Statsd, ":", 2)
-		if len(addr) < 2 {
-			panic("missing ':' in statsd address")
-		}
-		stat, err = statsd.New(addr[0], addr[1])
+		stat, err = statsd.New(config.Statsd, "gutterd")
 		if err != nil {
 			log.Printf("warning: could not initialize statsd client; %v", err)
 			stat = nil
 		}
-		stat.Inc("gutterd.proc.start", 1, 1)
+		stat.Inc("proc.start", 1, 1)
 	}
 
 	handlers = config.MakeHandlers()
@@ -139,7 +135,7 @@ func init() {
 
 	log.DefaultLoggerMux.RemoveSink(initLogger)
 	if stat != nil {
-		stat.Inc("gutterd.proc.boot", 1, 1)
+		stat.Inc("proc.boot", 1, 1)
 	}
 }
 
@@ -148,7 +144,7 @@ func handleFile(path string) {
 	torrent, err := metadata.ReadMetadataFile(path)
 	if err != nil {
 		if stat != nil {
-			stat.Inc("gutterd.torrent.error", 1, 1)
+			stat.Inc("torrent.error", 1, 1)
 		}
 		log.Error(err)
 		return
@@ -158,7 +154,7 @@ func handleFile(path string) {
 	for _, handler := range handlers {
 		if handler.Match(torrent) {
 			if stat != nil {
-				name := "gutterd.torrent.match." + handler.Name
+				name := "torrent.match." + handler.Name
 				stat.Inc(name, 1, 1)
 			}
 			log.Printf("MATCH\t%s\t%s\t%s", torrent.Info.Name, handler.Name, handler.Watch)
@@ -170,7 +166,7 @@ func handleFile(path string) {
 		}
 	}
 	if stat != nil {
-		stat.Inc("gutterd.torrent.no-match", 1, 1)
+		stat.Inc("torrent.no-match", 1, 1)
 	}
 	log.Print("NO MATCH\t", torrent.Info.Name)
 }
