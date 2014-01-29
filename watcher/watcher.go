@@ -1,7 +1,6 @@
 package watcher
 
 import (
-	"fmt"
 	"github.com/howeyc/fsnotify"
 )
 
@@ -10,16 +9,23 @@ type Watcher struct {
 	*fsnotify.Watcher
 }
 
-func New(filter Filter) (w *Watcher, err error) {
-	w = &Watcher{
+func New(filter Filter) (*Watcher, error) {
+	return NewInstr(filter, nil)
+}
+
+// instrumentable
+func NewInstr(filter Filter, errHandler func(error)) (*Watcher, error) {
+	w := &Watcher{
 		Event: make(chan *fsnotify.FileEvent, 1),
 	}
+	var err error
 	w.Watcher, err = fsnotify.NewWatcher()
 	if err != nil {
 		return nil, err
 	}
 	go func() {
 		for event := range w.Watcher.Event {
+			// TODO filter could take a long time...
 			if filter(event) {
 				w.Event <- event
 			}
@@ -28,11 +34,12 @@ func New(filter Filter) (w *Watcher, err error) {
 	}()
 	go func() {
 		for err := range w.Watcher.Error {
-			// just suck these out for now
-			fmt.Println(err)
+			if errHandler != nil {
+				go errHandler(err)
+			}
 		}
 	}()
-	return
+	return w, nil
 }
 
 func (w *Watcher) Watch(dirs ...Config) error {

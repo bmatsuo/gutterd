@@ -20,12 +20,12 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/cactus/go-statsd-client/statsd"
 	"github.com/howeyc/fsnotify"
 
 	"github.com/bmatsuo/gutterd/handler"
 	"github.com/bmatsuo/gutterd/log"
 	"github.com/bmatsuo/gutterd/metadata"
+	"github.com/bmatsuo/gutterd/statsd"
 	"github.com/bmatsuo/gutterd/watcher"
 )
 
@@ -34,7 +34,6 @@ var (
 	handlers []*handler.Handler // The ordered set of torrent handlers.
 	opt      Options            // Command line options.
 	fs       *watcher.Watcher   // Filesystem event watcher
-	stat     *statsd.Client     // Statsd
 )
 
 func HomeDirectory() (home string, err error) {
@@ -84,12 +83,11 @@ func init() {
 	}
 
 	if config.Statsd != "" {
-		stat, err = statsd.New(config.Statsd, "gutterd")
+		err := statsd.Init(config.Statsd, "gutterd")
 		if err != nil {
 			log.Printf("warning: could not initialize statsd client; %v", err)
-			stat = nil
 		}
-		stat.Inc("proc.start", 1, 1)
+		statsd.Incr("proc.start", 1, 1)
 	}
 
 	handlers = config.MakeHandlers()
@@ -134,18 +132,14 @@ func init() {
 	}
 
 	log.DefaultLoggerMux.RemoveSink(initLogger)
-	if stat != nil {
-		stat.Inc("proc.boot", 1, 1)
-	}
+	statsd.Incr("proc.boot", 1, 1)
 }
 
 // Handle a .torrent file.
 func handleFile(path string) {
 	torrent, err := metadata.ReadMetadataFile(path)
 	if err != nil {
-		if stat != nil {
-			stat.Inc("torrent.error", 1, 1)
-		}
+		statsd.Incr("torrent.error", 1, 1)
 		log.Error(err)
 		return
 	}
@@ -153,10 +147,8 @@ func handleFile(path string) {
 	log.Info("matching torrent to handlers ", handlers)
 	for _, handler := range handlers {
 		if handler.Match(torrent) {
-			if stat != nil {
-				name := "torrent.match." + handler.Name
-				stat.Inc(name, 1, 1)
-			}
+			name := "torrent.match." + handler.Name
+			statsd.Incr(name, 1, 1)
 			log.Printf("MATCH\t%s\t%s\t%s", torrent.Info.Name, handler.Name, handler.Watch)
 			mvpath := filepath.Join(handler.Watch, filepath.Base(path))
 			if err := os.Rename(path, mvpath); err != nil {
@@ -165,9 +157,7 @@ func handleFile(path string) {
 			return
 		}
 	}
-	if stat != nil {
-		stat.Inc("torrent.no-match", 1, 1)
-	}
+	statsd.Incr("torrent.no-match", 1, 1)
 	log.Print("NO MATCH\t", torrent.Info.Name)
 }
 
@@ -180,15 +170,23 @@ func signalHandler() {
 }
 
 func fsInit() (err error) {
-	fs, err = watcher.New(func(event *fsnotify.FileEvent) bool {
-		return event.IsCreate() && strings.HasSuffix(event.Name, ".torrent")
-	})
+	fs, err = watcher.NewInstr(
+		func(event *fsnotify.FileEvent) bool {
+			statsd.Incr("watcher.fs.events", 1, 1) //  filter sees all events
+			return event.IsCreate() && strings.HasSuffix(event.Name, ".torrent")
+		},
+		func(err error) {
+			statsd.Incr("watcher.fs.errors", 1, 1)
+			log.Printf("watcher error: %v", err)
+		})
 	if err != nil {
 		return
 	}
+
 	if err = fs.Watch(config.Watch...); err != nil {
 		return
 	}
+
 	return
 }
 
@@ -201,6 +199,7 @@ func main() {
 		os.Exit(1)
 	}
 	for event := range fs.Event {
+		statsd.Incr("torrents.matches", 1, 1)
 		handleFile(event.Name)
 	}
 }
