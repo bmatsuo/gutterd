@@ -1,9 +1,11 @@
 package handler
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"os"
+	"text/template"
 
 	"github.com/bmatsuo/gutterd/matcher"
 )
@@ -16,11 +18,21 @@ type Config struct {
 }
 
 func (c Config) Handler() *Handler {
+	var t *template.Template
+	if len(c.Script) > 0 {
+		var tbuf bytes.Buffer
+		fmt.Fprintln(&tbuf, "#!/bin/bash")
+		for i := range c.Script {
+			fmt.Fprintln(&tbuf, c.Script[i])
+		}
+		t = template.Must(template.New("").Parse(tbuf.String()))
+	}
 	return &Handler{
-		Name:    c.Name,
-		Watch:   c.Watch,
-		Script:  c.Script,
-		Matcher: c.Match.Matcher(),
+		Name:           c.Name,
+		Watch:          c.Watch,
+		Script:         c.Script,
+		Matcher:        c.Match.Matcher(),
+		scriptTemplate: t,
 	}
 }
 
@@ -33,6 +45,12 @@ func (hc Config) Validate() error {
 	}
 	if hc.Watch != "" && len(hc.Script) == 0 {
 		return fmt.Errorf("script and watch may not both be provided for %q", hc.Name)
+	}
+	for i := range hc.Script {
+		_, err := template.New("").Parse(hc.Script[i])
+		if err != nil {
+			return fmt.Errorf("script %d for %q is invalid: %v", err)
+		}
 	}
 	stat, err := os.Stat(hc.Watch)
 	if err != nil {
