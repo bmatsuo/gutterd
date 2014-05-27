@@ -139,10 +139,6 @@ func fsInit() (err error) {
 }
 
 func main() {
-	if config.HTTP != "" {
-		go ListenAndServe()
-		glog.Infof("serving http at %v", config.HTTP)
-	}
 	if err := fsInit(); err != nil {
 		glog.Error("error initializing file system watcher; %v", err)
 		os.Exit(1)

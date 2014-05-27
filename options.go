@@ -30,7 +30,6 @@ type Options struct {
 // attach command line flags to opt. call flag.Parse() after.
 func setupFlags(opt *Options) {
 	flag.Int64Var((*int64)(&opt.PollFrequency), "poll", 0, "Specify a polling frequency (in seconds).")
-	flag.StringVar(&opt.HTTP, "http", "", "Address to serve web requests from (e.g. ':6060').")
 	flag.StringVar(&opt.watchStr, "watch", "", "Specify a set of directories to watch.")
 	flag.StringVar(&opt.ConfigPath, "config", "", "A config file to use instead of ~/.config/gutterd.json.")
 }
