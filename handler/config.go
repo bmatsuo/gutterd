@@ -9,10 +9,10 @@ import (
 )
 
 type Config struct {
-	Name   string         `json:"name"`   // A name for logging purposes.
-	Watch  string         `json:"watch"`  // Matching .torrent file destination.
-	Script string         `json:"script"` // Executed on matched files (should delete the file).
-	Match  matcher.Config `json:"match"`  // Describes .torrent files to handle.
+	Name   string         `json:"name"`             // A name for logging purposes.
+	Watch  string         `json:"watch,omitempty"`  // Matching .torrent file destination.
+	Script []string       `json:"script,omitempty"` // Executed on matched files (should delete the file).
+	Match  matcher.Config `json:"match"`            // Describes .torrent files to handle.
 }
 
 func (c Config) Handler() *Handler {
@@ -28,10 +28,10 @@ func (hc Config) Validate() error {
 	if hc.Name == "" {
 		return errors.New("nameless handler")
 	}
-	if hc.Watch == "" && hc.Script == "" {
+	if hc.Watch == "" && len(hc.Script) == 0 {
 		return fmt.Errorf("either watch or script must be provided for handler %q", hc.Name)
 	}
-	if hc.Watch != "" && hc.Script != "" {
+	if hc.Watch != "" && len(hc.Script) == 0 {
 		return fmt.Errorf("script and watch may not both be provided for %q", hc.Name)
 	}
 	stat, err := os.Stat(hc.Watch)
