@@ -21,7 +21,6 @@ func (c Config) Handler() *Handler {
 	var t *template.Template
 	if len(c.Script) > 0 {
 		var tbuf bytes.Buffer
-		fmt.Fprintln(&tbuf, "#!/bin/bash")
 		for i := range c.Script {
 			fmt.Fprintln(&tbuf, c.Script[i])
 		}

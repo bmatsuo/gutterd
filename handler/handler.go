@@ -2,7 +2,9 @@ package handler
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"text/template"
 
@@ -27,18 +29,46 @@ func (h *Handler) Handle(path string, meta *metadata.Metadata) error {
 		return ErrNoMatch
 	}
 	if h.Watch != "" {
-		mvpath := filepath.Join(h.Watch, filepath.Base(path))
-		if err := os.Rename(path, mvpath); err != nil {
-			return err
-		}
+		return h.handleWatch(path, meta)
 	}
 	if len(h.Script) > 0 {
-		h.handleScript(path, meta)
+		return h.handleScript(path, meta)
 	}
-	return nil
+	return fmt.Errorf("%q matched but has no action for %q", h.Name, meta.Info.Name)
 }
 
+// handleWatch moves path to h.Watch
+func (h *Handler) handleWatch(path string, meta *metadata.Metadata) error {
+	mvpath := filepath.Join(h.Watch, filepath.Base(path))
+	return os.Rename(path, mvpath)
+}
+
+// handleScript creates a temporary script from the template, executes it, and removes it.
 func (h *Handler) handleScript(path string, meta *metadata.Metadata) error {
+	contxt := map[string]interface{}{
+		"Path": path,
+	}
+	f, err := ioutil.TempFile("", "gutterd-script-")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(f.Name())
+	err = h.scriptTemplate.Execute(f, contxt)
+	if err != nil {
+		f.Close()
+		return err
+	}
+	err = f.Close()
+	if err != nil {
+		return fmt.Errorf("%q couldn't create script file: %v", err)
+	}
+	cmd := exec.Command("/bin/bash", f.Name())
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Run()
+	if err != nil {
+		return fmt.Errorf("%q script failed: %v", err)
+	}
 	return nil
 }
 
