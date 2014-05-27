@@ -7,7 +7,7 @@ package matcher
 /*  Filename:    matcher.go
  *  Author:      Bryan Matsuo <bmatsuo@soe.ucsc.edu>
  *  Created:     2012-03-04 19:59:29.661375 -0800 PST
- *  Description: 
+ *  Description:
  */
 
 import (
@@ -17,7 +17,7 @@ import (
 	"github.com/bmatsuo/gutterd/metadata"
 )
 
-// Matched against torrents (Metadata) by Handler types.
+// Matcher matches torrents (Metadata).
 type Matcher struct {
 	Tracker  *regexp.Regexp
 	Basename *regexp.Regexp
