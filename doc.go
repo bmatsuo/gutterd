@@ -39,13 +39,6 @@ specifies directories to watch for incoming .torrent files, as well as handlers
 to match against and demux those files. Here is an example configuration.
 
     {
-        "http": ":6060",
-        "logs": [
-            {
-                "path": "&2",
-                "accepts": [ "gutterd", "http" ]
-            }
-        ],
         "watch": [ "/Users/b/Downloads" ],
         "pollFrequency": 60,
         "handlers": [
