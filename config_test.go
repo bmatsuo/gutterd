@@ -9,6 +9,10 @@ package main
 import (
 	"reflect"
 	"testing"
+
+	"github.com/bmatsuo/gutterd/handler"
+	"github.com/bmatsuo/gutterd/matcher"
+	"github.com/bmatsuo/gutterd/watcher"
 )
 
 var configValidTests = []struct {
@@ -35,14 +39,12 @@ var configValidTests = []struct {
 		&Config{},
 		&Config{
 			Path:          "./gutterd.json",
-			HTTP:          ":8080",
 			PollFrequency: 20,
-			Watch:         []string{"/home/foo/Downloads"},
-			Logs:          []LogConfig{{Path: "&1", Accepts: []string{"gutterd"}}},
-			Handlers: []HandlerConfig{{
+			Watch:         []watcher.Config{"/home/foo/Downloads"},
+			Handlers: []handler.Config{{
 				Name:  "foo",
 				Watch: "./",
-				Match: MatcherConfig{
+				Match: matcher.Config{
 					Tracker:  `tracker\.baz\.net`,
 					Basename: "qux",
 					Ext:      ".quux"}}},
@@ -61,18 +63,16 @@ var configValidTests = []struct {
 		"./gutterd.json",
 		&Config{
 			PollFrequency: 30,
-			Watch:         []string{"./"},
-			Logs:          []LogConfig{{"&2", []string{"http"}}},
+			Watch:         []watcher.Config{"./"},
 		},
 		&Config{
 			Path:          "./gutterd.json",
 			PollFrequency: 30,
-			Watch:         []string{"./"},
-			Logs:          []LogConfig{{"&1", []string{"gutterd"}}},
-			Handlers: []HandlerConfig{{
+			Watch:         []watcher.Config{"./"},
+			Handlers: []handler.Config{{
 				Name:  "foo",
 				Watch: "./",
-				Match: MatcherConfig{
+				Match: matcher.Config{
 					Tracker:  `tracker\.baz\.net`,
 					Basename: "qux",
 					Ext:      ".quux"}}},

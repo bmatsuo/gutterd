@@ -24,7 +24,6 @@ import (
 
 type Config struct {
 	Path          string           `json:"-"`             // The path of the config file.
-	HTTP          string           `json:"http"`          // HTTP service address.
 	Statsd        string           `json:"statsd"`        // address of statsd
 	Watch         []watcher.Config `json:"watch"`         // Incoming watch directories.
 	PollFrequency int64            `json:"pollFrequency"` // Poll frequency in seconds.

@@ -17,8 +17,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"code.google.com/p/go.exp/fsnotify"
 	"github.com/golang/glog"
-	"github.com/howeyc/fsnotify"
 
 	"github.com/bmatsuo/gutterd/handler"
 	"github.com/bmatsuo/gutterd/metadata"
@@ -104,15 +104,14 @@ func main() {
 	// Read the deamon configuration. flag overrides default (~/.config/gutterd.json)
 	var err error
 	defconfig := &Config{}
-	configPath := opt.ConfigPath
-	if configPath == "" {
+	if opt.ConfigPath == "" {
 		home, err := HomeDirectory()
 		if err != nil {
 			glog.Fatalf("unable to locate home directory: %v", err)
 		}
-		configPath = filepath.Join(home, ".config", "gutterd.json")
+		opt.ConfigPath = filepath.Join(home, ".config", "gutterd.json")
 	}
-	if config, err = LoadConfig(configPath, defconfig); err != nil {
+	if config, err = LoadConfig(opt.ConfigPath, defconfig); err != nil {
 		glog.Fatalf("unable to load configuration: %v", err)
 	}
 
@@ -129,9 +128,6 @@ func main() {
 	// command line flag overrides
 	if opt.Watch != nil {
 		config.Watch = opt.Watch
-	}
-	if opt.HTTP != "" {
-		config.HTTP = opt.HTTP
 	}
 
 	statsd.Incr("proc.boot", 1, 1)

@@ -18,7 +18,6 @@ import (
 
 // A struct that holds parsed command line flags.
 type Options struct {
-	HTTP          string
 	ConfigPath    string
 	PollFrequency int64
 	watchStr      string
