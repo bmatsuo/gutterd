@@ -26,18 +26,6 @@ configuration file. Default values will be ignored.
 	-config=""
   			A config file to use instead of ~/.config/gutterd.json.
 
-	-http=""
-  			Address to serve web requests from (e.g. ':6060').
-
-	-log=""
-			A path to log output. This overrides all logs specified in the config file.
-			If -log-accepts is not specified, all logs will be output to the file.
-
-	-log-accepts=""
-			Log names for filtering the log specified with -log. If -log is not
-			specified, accepted logs are printed to stderr. Similar to -log, logs in the
-			config file wil be overridden when the flag is provided.
-
 	-poll=0
 			Specify a polling frequency (in seconds).
 
