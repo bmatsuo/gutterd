@@ -48,24 +48,19 @@ func handle(handlers []*handler.Handler, path string) {
 	}
 
 	// Find the first handler matching the supplied torrent.
-	for _, handler := range handlers {
-		if handler.Match(torrent) {
-			name := "torrent.match." + handler.Name
-			statsd.Incr(name, 1, 1)
-			glog.Infof("match file:%q handler:%q watch:%q",
-				torrent.Info.Name,
-				handler.Name,
-				handler.Watch,
-			)
-			if handler.Watch != "" {
-				mvpath := filepath.Join(handler.Watch, filepath.Base(path))
-				if err := os.Rename(path, mvpath); err != nil {
-					glog.Error("watch import failed (%q); %v", torrent.Info.Name, err)
-				}
-				return
-			}
-			return
+	for _, h := range handlers {
+		err := h.Handle(path, torrent)
+		if err == handler.ErrNoMatch {
+			continue
 		}
+		if err != nil {
+			glog.Warning(err)
+			continue
+		}
+		name := "torrent.match." + h.Name
+		statsd.Incr(name, 1, 1)
+		glog.Infof("%q matched file %q", torrent.Info.Name, h.Name)
+		return
 	}
 
 	statsd.Incr("torrent.no-match", 1, 1)
