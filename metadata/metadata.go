@@ -7,13 +7,14 @@ package metadata
 /*  Filename:    metadata.go
  *  Author:      Bryan Matsuo <bmatsuo@soe.ucsc.edu>
  *  Created:     2012-03-04 20:29:46.043613 -0800 PST
- *  Description: 
+ *  Description:
  */
 
 import (
 	"fmt"
-	"github.com/bmatsuo/gorrent/bencode"
 	"io/ioutil"
+
+	"github.com/bmatsuo/gorrent/bencode"
 )
 
 // One file in a multi-file Metadata object.
