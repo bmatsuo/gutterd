@@ -27,10 +27,8 @@ import (
 )
 
 var (
-	config   *Config            // Deamon configuration.
-	handlers []*handler.Handler // The ordered set of torrent handlers.
-	opt      *Options           // Command line options.
-	fs       *watcher.Watcher   // Filesystem event watcher
+	config *Config  // Deamon configuration.
+	opt    *Options // Command line options.
 )
 
 func HomeDirectory() (home string, err error) {
@@ -41,13 +39,14 @@ func HomeDirectory() (home string, err error) {
 }
 
 // Handle a .torrent file.
-func handleFile(path string) {
+func handle(handlers []*handler.Handler, path string) {
 	torrent, err := metadata.ReadMetadataFile(path)
 	if err != nil {
 		statsd.Incr("torrent.error", 1, 1)
 		glog.Errorf("error reading torrent (%q); %v", path, err)
 		return
 	}
+
 	// Find the first handler matching the supplied torrent.
 	for _, handler := range handlers {
 		if handler.Match(torrent) {
@@ -58,44 +57,19 @@ func handleFile(path string) {
 				handler.Name,
 				handler.Watch,
 			)
-			mvpath := filepath.Join(handler.Watch, filepath.Base(path))
-			if err := os.Rename(path, mvpath); err != nil {
-				glog.Error("watch import failed (%q); %v", torrent.Info.Name, err)
+			if handler.Watch != "" {
+				mvpath := filepath.Join(handler.Watch, filepath.Base(path))
+				if err := os.Rename(path, mvpath); err != nil {
+					glog.Error("watch import failed (%q); %v", torrent.Info.Name, err)
+				}
+				return
 			}
 			return
 		}
 	}
+
 	statsd.Incr("torrent.no-match", 1, 1)
 	glog.Warningf("no handler matched torrent: %q", torrent.Info.Name)
-}
-
-func signalHandler() {
-	sig := make(chan os.Signal, 2)
-	signal.Notify(sig, os.Interrupt)
-	for _ = range sig {
-		fs.Close()
-	}
-}
-
-func fsInit() (err error) {
-	fs, err = watcher.NewInstr(
-		func(event *fsnotify.FileEvent) bool {
-			statsd.Incr("watcher.fs.events", 1, 1) //  filter sees all events
-			return event.IsCreate() && strings.HasSuffix(event.Name, ".torrent")
-		},
-		func(err error) {
-			statsd.Incr("watcher.fs.errors", 1, 1)
-			glog.Warningf("watcher error: %v", err)
-		})
-	if err != nil {
-		return
-	}
-
-	if err = fs.Watch(config.Watch...); err != nil {
-		return
-	}
-
-	return
 }
 
 func main() {
@@ -123,7 +97,7 @@ func main() {
 		statsd.Incr("proc.start", 1, 1)
 	}
 
-	handlers = config.MakeHandlers()
+	handlers := config.MakeHandlers()
 
 	// command line flag overrides
 	if opt.Watch != nil {
@@ -132,12 +106,43 @@ func main() {
 
 	statsd.Incr("proc.boot", 1, 1)
 
-	if err := fsInit(); err != nil {
-		glog.Error("error initializing file system watcher; %v", err)
-		os.Exit(1)
+	sig := make(chan os.Signal, 2)
+	kill := make(chan struct{})
+	signal.Notify(sig, os.Interrupt)
+	go func() {
+		<-sig
+		signal.Stop(sig)
+		close(kill)
+	}()
+
+	fs, err := watcher.NewInstr(
+		func(event *fsnotify.FileEvent) bool {
+			statsd.Incr("watcher.fs.events", 1, 1) //  filter sees all events
+			return event.IsCreate() && strings.HasSuffix(event.Name, ".torrent")
+		},
+		func(err error) {
+			statsd.Incr("watcher.fs.errors", 1, 1)
+			glog.Warningf("watcher error: %v", err)
+		})
+	if err != nil {
+		glog.Fatalf("error creating file system watcher: %v", err)
 	}
+	go func() {
+		<-kill
+		glog.Infof("shutting down watchers")
+		err := fs.Close()
+		if err != nil {
+			glog.Warningf("error closing filesystem watcher")
+		}
+	}()
+
+	if err = fs.Watch(config.Watch...); err != nil {
+		glog.Fatalf("error initializing file system watcher; %v", err)
+		return
+	}
+
 	for event := range fs.Event {
 		statsd.Incr("torrents.matches", 1, 1)
-		handleFile(event.Name)
+		handle(handlers, event.Name)
 	}
 }
