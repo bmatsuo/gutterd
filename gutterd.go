@@ -40,46 +40,6 @@ func HomeDirectory() (home string, err error) {
 	return
 }
 
-// Read the config file and setup global variables.
-func init() {
-	opt = parseFlags()
-
-	// Read the deamon configuration. flag overrides default (~/.config/gutterd.json)
-	var err error
-	defconfig := &Config{}
-	configPath := opt.ConfigPath
-	if configPath == "" {
-		home, err := HomeDirectory()
-		if err != nil {
-			glog.Fatalf("unable to locate home directory: %v", err)
-		}
-		configPath = filepath.Join(home, ".config", "gutterd.json")
-	}
-	if config, err = LoadConfig(configPath, defconfig); err != nil {
-		glog.Fatalf("unable to load configuration: %v", err)
-	}
-
-	if config.Statsd != "" {
-		err := statsd.Init(config.Statsd, "gutterd")
-		if err != nil {
-			glog.Warningf("statsd init error (no stats will be recorded); %v", err)
-		}
-		statsd.Incr("proc.start", 1, 1)
-	}
-
-	handlers = config.MakeHandlers()
-
-	// command line flag overrides
-	if opt.Watch != nil {
-		config.Watch = opt.Watch
-	}
-	if opt.HTTP != "" {
-		config.HTTP = opt.HTTP
-	}
-
-	statsd.Incr("proc.boot", 1, 1)
-}
-
 // Handle a .torrent file.
 func handleFile(path string) {
 	torrent, err := metadata.ReadMetadataFile(path)
@@ -139,6 +99,43 @@ func fsInit() (err error) {
 }
 
 func main() {
+	opt = parseFlags()
+
+	// Read the deamon configuration. flag overrides default (~/.config/gutterd.json)
+	var err error
+	defconfig := &Config{}
+	configPath := opt.ConfigPath
+	if configPath == "" {
+		home, err := HomeDirectory()
+		if err != nil {
+			glog.Fatalf("unable to locate home directory: %v", err)
+		}
+		configPath = filepath.Join(home, ".config", "gutterd.json")
+	}
+	if config, err = LoadConfig(configPath, defconfig); err != nil {
+		glog.Fatalf("unable to load configuration: %v", err)
+	}
+
+	if config.Statsd != "" {
+		err := statsd.Init(config.Statsd, "gutterd")
+		if err != nil {
+			glog.Warningf("statsd init error (no stats will be recorded); %v", err)
+		}
+		statsd.Incr("proc.start", 1, 1)
+	}
+
+	handlers = config.MakeHandlers()
+
+	// command line flag overrides
+	if opt.Watch != nil {
+		config.Watch = opt.Watch
+	}
+	if opt.HTTP != "" {
+		config.HTTP = opt.HTTP
+	}
+
+	statsd.Incr("proc.boot", 1, 1)
+
 	if err := fsInit(); err != nil {
 		glog.Error("error initializing file system watcher; %v", err)
 		os.Exit(1)
