@@ -111,7 +111,7 @@ func handleFile(path string) {
 
 func signalHandler() {
 	sig := make(chan os.Signal, 2)
-	signal.Notify(sig, os.Kill, os.Interrupt)
+	signal.Notify(sig, os.Interrupt)
 	for _ = range sig {
 		fs.Close()
 	}
