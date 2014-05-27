@@ -69,8 +69,8 @@ to match against and demux those files. Here is an example configuration.
                 }
             },
             {
-                "name": "other",
-                "watch": "/Users/b/DL"
+                "name": "unknown",
+                "script": [ "rm {{.Path}}" ]
             }
         ]
     }
