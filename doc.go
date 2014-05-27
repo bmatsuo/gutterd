@@ -81,16 +81,5 @@ When handler "match" properties are unspecified, they will match any torrent.
 Torrents are matched against handlers in order. So, in the example above, the
 'other' handler acts as a catch-all and will match all torrents not matched by
 any other handler.
-
-HTTP Server:
-
-When the "http" configuration is set, either in the config file or by command
-line flag, HTTP requests are served from the specified address. When no address
-is provided, no HTTP server is started.
-
-Gutterd provides the following endpoints:
-
-	/config
-	TODO /matchlog
 */
 package documentation
