@@ -38,42 +38,8 @@ Gutterd uses a JSON configuration. Most improtantly, the configuration
 specifies directories to watch for incoming .torrent files, as well as handlers
 to match against and demux those files. Here is an example configuration.
 
-    {
-        "watch": [ "/Users/b/Downloads" ],
-        "pollFrequency": 60,
-        "handlers": [
-            {
-                "name": "ubuntu",
-                "watch": "/Users/b/UbuntuImages",
-                "match": {
-                    "tracker": "torrent[.]ubuntu[.]com",
-                    "ext": "[.]iso"
-                }
-            },
-            {
-                "name": "arch-net",
-                "watch": "/Users/b/ArchImages/Net",
-				"match": {
-                    "tracker": "tracker[.]archlinux[.]org",
-                    "basename": "netinstall",
-                    "ext": "[.]iso"
-                }
-            },
-            {
-                "name": "arch-core",
-                "watch": "/Users/b/ArchImages/Core",
-                "match": {
-                    "tracker": "tracker[.]archlinux[.]org",
-                    "basename": "core",
-                    "ext": "[.]iso"
-                }
-            },
-            {
-                "name": "other",
-                "watch": "/Users/b/DL"
-            }
-        ]
-    }
+An example configuration can be found at
+https://github.com/bmatsuo/gutterd/tree/master/example.config.json
 
 Handlers:
 

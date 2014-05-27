@@ -1,0 +1,36 @@
+{
+    "watch": [ "/Users/b/Downloads" ],
+    "pollFrequency": 60,
+    "handlers": [
+        {
+            "name": "ubuntu",
+            "watch": "/Users/b/UbuntuImages",
+            "match": {
+                "tracker": "torrent[.]ubuntu[.]com",
+                "ext": "[.]iso"
+            }
+        },
+        {
+            "name": "arch-net",
+            "watch": "/Users/b/ArchImages/Net",
+            "match": {
+                "tracker": "tracker[.]archlinux[.]org",
+                "basename": "netinstall",
+                "ext": "[.]iso"
+            }
+        },
+        {
+            "name": "arch-core",
+            "watch": "/Users/b/ArchImages/Core",
+            "match": {
+                "tracker": "tracker[.]archlinux[.]org",
+                "basename": "core",
+                "ext": "[.]iso"
+            }
+        },
+        {
+            "name": "unknown",
+            "script": [ "rm {{.Path}}" ]
+        }
+    ]
+}
