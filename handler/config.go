@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"os"
@@ -17,21 +16,16 @@ type Config struct {
 	Match  matcher.Config `json:"match"`            // Describes .torrent files to handle.
 }
 
-func (c Config) Handler() *Handler {
-	var t *template.Template
-	if len(c.Script) > 0 {
-		var tbuf bytes.Buffer
-		for i := range c.Script {
-			fmt.Fprintln(&tbuf, c.Script[i])
-		}
-		t = template.Must(template.New("").Parse(tbuf.String()))
-	}
-	return &Handler{
-		Name:           c.Name,
-		Watch:          c.Watch,
-		Script:         c.Script,
-		Matcher:        c.Match.Matcher(),
-		scriptTemplate: t,
+func (c Config) Handler() (*Handler, error) {
+	switch {
+	case c.Watch != "" && len(c.Script) > 0:
+		return nil, fmt.Errorf("both watch and script present")
+	case c.Watch != "":
+		return NewWatch(c.Name, c.Match.Matcher(), c.Watch), nil
+	case len(c.Script) > 0:
+		return NewScript(c.Name, c.Match.Matcher(), c.Script...)
+	default:
+		return nil, fmt.Errorf("nother watch no script present")
 	}
 }
 

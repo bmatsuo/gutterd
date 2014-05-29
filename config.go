@@ -99,10 +99,14 @@ func LoadConfig(path string, defaults *Config) (*Config, error) {
 	return config, err
 }
 
-func (c *Config) MakeHandlers() []*handler.Handler {
+func (c *Config) MakeHandlers() ([]*handler.Handler, error) {
+	var err error
 	handlers := make([]*handler.Handler, len(c.Handlers))
 	for i := range c.Handlers {
-		handlers[i] = c.Handlers[i].Handler()
+		handlers[i], err = c.Handlers[i].Handler()
+		if err != nil {
+			return nil, err
+		}
 	}
-	return handlers
+	return handlers, nil
 }

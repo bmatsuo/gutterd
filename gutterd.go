@@ -88,7 +88,10 @@ func main() {
 		statsd.Incr("proc.start", 1, 1)
 	}
 
-	handlers := config.MakeHandlers()
+	handlers, err := config.MakeHandlers()
+	if err != nil {
+		glog.Fatal("unable to create handlers: %v", err)
+	}
 
 	// command line flag overrides
 	if opts.Watch != nil {
@@ -172,7 +175,7 @@ func HandlePath(handlers []*handler.Handler, path string) {
 			glog.Warning(err)
 			continue
 		}
-		name := "torrent.match." + h.Name
+		name := "torrent.match." + h.Name()
 		statsd.Incr(name, 1, 1)
 		glog.Infof("%q matched file %q", torrent.Info.Name, h.Name)
 		return
