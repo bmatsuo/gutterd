@@ -28,10 +28,6 @@ import (
 	"github.com/golang/glog"
 )
 
-var (
-	config *Config // Deamon configuration.
-)
-
 func HomeDirectory() (home string, err error) {
 	if home = os.Getenv("HOME"); home == "" {
 		err = fmt.Errorf("HOME is not set")
@@ -79,7 +75,8 @@ func main() {
 		}
 		opts.ConfigPath = filepath.Join(home, ".config", "gutterd.json")
 	}
-	if config, err = LoadConfig(opts.ConfigPath, defconfig); err != nil {
+	config, err := LoadConfig(opts.ConfigPath, defconfig)
+	if err != nil {
 		glog.Fatalf("unable to load configuration: %v", err)
 	}
 
