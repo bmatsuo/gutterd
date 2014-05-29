@@ -11,6 +11,7 @@ package main
  */
 
 import (
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -29,8 +30,7 @@ import (
 )
 
 var (
-	config *Config  // Deamon configuration.
-	opt    *Options // Command line options.
+	config *Config // Deamon configuration.
 )
 
 func HomeDirectory() (home string, err error) {
@@ -40,8 +40,118 @@ func HomeDirectory() (home string, err error) {
 	return
 }
 
+func main() {
+	// A struct that holds parsed command line flags.
+	var opts struct {
+		ConfigPath    string
+		PollFrequency int64
+		watchStr      string
+		Watch         []watcher.Config
+		LogPath       string
+		LogAccepts    string
+	}
+
+	// attach command line flags to opt. call flag.Parse() after.
+	flag.Int64Var((*int64)(&opts.PollFrequency), "poll", 0, "Specify a polling frequency (in seconds).")
+	flag.StringVar(&opts.watchStr, "watch", "", "Specify a set of directories to watch.")
+	flag.StringVar(&opts.ConfigPath, "config", "", "A config file to use instead of ~/.config/gutterd.json.")
+	flag.Parse()
+
+	// check flags for acceptable values.
+	if opts.watchStr != "" {
+		for _, dir := range filepath.SplitList(opts.watchStr) {
+			opts.Watch = append(opts.Watch, watcher.Config(dir))
+		}
+		for _, w := range opts.Watch {
+			if err := w.Validate(); err != nil {
+				glog.Fatal("watch: %v", err)
+			}
+			continue
+		}
+	}
+
+	// Read the deamon configuration. flag overrides default (~/.config/gutterd.json)
+	var err error
+	defconfig := &Config{}
+	if opts.ConfigPath == "" {
+		home, err := HomeDirectory()
+		if err != nil {
+			glog.Fatalf("unable to locate home directory: %v", err)
+		}
+		opts.ConfigPath = filepath.Join(home, ".config", "gutterd.json")
+	}
+	if config, err = LoadConfig(opts.ConfigPath, defconfig); err != nil {
+		glog.Fatalf("unable to load configuration: %v", err)
+	}
+
+	if config.Statsd != "" {
+		err := statsd.Init(config.Statsd, "gutterd")
+		if err != nil {
+			glog.Warningf("statsd init error (no stats will be recorded); %v", err)
+		}
+		statsd.Incr("proc.start", 1, 1)
+	}
+
+	handlers := config.MakeHandlers()
+
+	// command line flag overrides
+	if opts.Watch != nil {
+		config.Watch = opts.Watch
+	}
+
+	statsd.Incr("proc.boot", 1, 1)
+
+	sig := make(chan os.Signal, 2)
+	kill := make(chan struct{})
+	signal.Notify(sig, os.Interrupt)
+	go func() {
+		<-sig
+		signal.Stop(sig)
+		close(kill)
+	}()
+
+	fs, err := SetupWatcher(kill)
+	if err != nil {
+		glog.Fatalf("error creating up file system watcher; %v", err)
+	}
+
+	if err = fs.Watch(config.Watch...); err != nil {
+		glog.Fatalf("error initializing file system watcher; %v", err)
+		return
+	}
+
+	for event := range fs.Event {
+		statsd.Incr("torrents.matches", 1, 1)
+		HandlePath(handlers, event.Name)
+	}
+}
+
+func SetupWatcher(stop <-chan struct{}) (*watcher.Watcher, error) {
+	fs, err := watcher.NewInstr(
+		func(event *fsnotify.FileEvent) bool {
+			statsd.Incr("watcher.fs.events", 1, 1) //  filter sees all events
+			return event.IsCreate() && strings.HasSuffix(event.Name, ".torrent")
+		},
+		func(err error) {
+			statsd.Incr("watcher.fs.errors", 1, 1)
+			glog.Warningf("watcher error: %v", err)
+		})
+	if err != nil {
+		return nil, err
+	}
+	go func() {
+		<-stop
+		glog.Infof("shutting down watchers")
+		err := fs.Close()
+		if err != nil {
+			glog.Warningf("error closing filesystem watcher")
+		}
+	}()
+	return fs, err
+}
+
 // Handle a .torrent file.
-func handle(handlers []*handler.Handler, path string) {
+func HandlePath(handlers []*handler.Handler, path string) {
 	p, err := ioutil.ReadFile(path)
 	if err != nil {
 		statsd.Incr("torrent.error", 1, 1)
@@ -74,79 +184,4 @@ func handle(handlers []*handler.Handler, path string) {
 
 	statsd.Incr("torrent.no-match", 1, 1)
 	glog.Warningf("no handler matched torrent: %q", torrent.Info.Name)
-}
-
-func main() {
-	opt = parseFlags()
-
-	// Read the deamon configuration. flag overrides default (~/.config/gutterd.json)
-	var err error
-	defconfig := &Config{}
-	if opt.ConfigPath == "" {
-		home, err := HomeDirectory()
-		if err != nil {
-			glog.Fatalf("unable to locate home directory: %v", err)
-		}
-		opt.ConfigPath = filepath.Join(home, ".config", "gutterd.json")
-	}
-	if config, err = LoadConfig(opt.ConfigPath, defconfig); err != nil {
-		glog.Fatalf("unable to load configuration: %v", err)
-	}
-
-	if config.Statsd != "" {
-		err := statsd.Init(config.Statsd, "gutterd")
-		if err != nil {
-			glog.Warningf("statsd init error (no stats will be recorded); %v", err)
-		}
-		statsd.Incr("proc.start", 1, 1)
-	}
-
-	handlers := config.MakeHandlers()
-
-	// command line flag overrides
-	if opt.Watch != nil {
-		config.Watch = opt.Watch
-	}
-
-	statsd.Incr("proc.boot", 1, 1)
-
-	sig := make(chan os.Signal, 2)
-	kill := make(chan struct{})
-	signal.Notify(sig, os.Interrupt)
-	go func() {
-		<-sig
-		signal.Stop(sig)
-		close(kill)
-	}()
-
-	fs, err := watcher.NewInstr(
-		func(event *fsnotify.FileEvent) bool {
-			statsd.Incr("watcher.fs.events", 1, 1) //  filter sees all events
-			return event.IsCreate() && strings.HasSuffix(event.Name, ".torrent")
-		},
-		func(err error) {
-			statsd.Incr("watcher.fs.errors", 1, 1)
-			glog.Warningf("watcher error: %v", err)
-		})
-	if err != nil {
-		glog.Fatalf("error creating file system watcher: %v", err)
-	}
-	go func() {
-		<-kill
-		glog.Infof("shutting down watchers")
-		err := fs.Close()
-		if err != nil {
-			glog.Warningf("error closing filesystem watcher")
-		}
-	}()
-
-	if err = fs.Watch(config.Watch...); err != nil {
-		glog.Fatalf("error initializing file system watcher; %v", err)
-		return
-	}
-
-	for event := range fs.Event {
-		statsd.Incr("torrents.matches", 1, 1)
-		handle(handlers, event.Name)
-	}
 }
