@@ -14,7 +14,7 @@ import (
 	"path/filepath"
 	"regexp"
 
-	"github.com/bmatsuo/gutterd/metadata"
+	"github.com/bmatsuo/torrent/metainfo"
 )
 
 // Matcher matches torrents (Metadata).
@@ -26,7 +26,7 @@ type Matcher struct {
 
 // Match a torrent against the patterns of m. If all non-nil patterns match the
 // corresponding fields in torrent, then the method returns true.
-func (m *Matcher) Match(torrent *metadata.Metadata) bool {
+func (m *Matcher) Match(torrent *metainfo.Metainfo) bool {
 	if m.Tracker != nil {
 		if !m.Tracker.MatchString(torrent.Announce) {
 			return false

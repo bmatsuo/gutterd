@@ -9,7 +9,7 @@ import (
 	"text/template"
 
 	"github.com/bmatsuo/gutterd/matcher"
-	"github.com/bmatsuo/gutterd/metadata"
+	"github.com/bmatsuo/torrent/metainfo"
 )
 
 // A Handler type's only function is to move matching torrents into
@@ -24,7 +24,7 @@ type Handler struct {
 
 var ErrNoMatch = fmt.Errorf("no match")
 
-func (h *Handler) Handle(path string, meta *metadata.Metadata) error {
+func (h *Handler) Handle(path string, meta *metainfo.Metainfo) error {
 	if !h.Match(meta) {
 		return ErrNoMatch
 	}
@@ -38,13 +38,13 @@ func (h *Handler) Handle(path string, meta *metadata.Metadata) error {
 }
 
 // handleWatch moves path to h.Watch
-func (h *Handler) handleWatch(path string, meta *metadata.Metadata) error {
+func (h *Handler) handleWatch(path string, meta *metainfo.Metainfo) error {
 	mvpath := filepath.Join(h.Watch, filepath.Base(path))
 	return os.Rename(path, mvpath)
 }
 
 // handleScript creates a temporary script from the template, executes it, and removes it.
-func (h *Handler) handleScript(path string, meta *metadata.Metadata) error {
+func (h *Handler) handleScript(path string, meta *metainfo.Metainfo) error {
 	contxt := map[string]interface{}{
 		"Path": path,
 	}

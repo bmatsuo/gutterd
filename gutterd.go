@@ -12,16 +12,18 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"strings"
 
 	"code.google.com/p/go.exp/fsnotify"
+	"github.com/bmatsuo/torrent/bencoding"
+	"github.com/bmatsuo/torrent/metainfo"
 	"github.com/golang/glog"
 
 	"github.com/bmatsuo/gutterd/handler"
-	"github.com/bmatsuo/gutterd/metadata"
 	"github.com/bmatsuo/gutterd/statsd"
 	"github.com/bmatsuo/gutterd/watcher"
 )
@@ -40,7 +42,14 @@ func HomeDirectory() (home string, err error) {
 
 // Handle a .torrent file.
 func handle(handlers []*handler.Handler, path string) {
-	torrent, err := metadata.ReadMetadataFile(path)
+	p, err := ioutil.ReadFile(path)
+	if err != nil {
+		statsd.Incr("torrent.error", 1, 1)
+		glog.Errorf("error reading torrent (%q); %v", path, err)
+		return
+	}
+	var torrent *metainfo.Metainfo
+	err = bencoding.Unmarshal(&torrent, p)
 	if err != nil {
 		statsd.Incr("torrent.error", 1, 1)
 		glog.Errorf("error reading torrent (%q); %v", path, err)
