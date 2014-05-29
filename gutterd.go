@@ -70,13 +70,13 @@ func main() {
 		}
 	}
 
-	// Read the deamon configuration. flag overrides default (~/.config/gutterd.json)
+	// Read the deamon configuration.
 	var err error
 	defconfig := &Config{}
 	if opts.ConfigPath == "" {
 		home, err := HomeDirectory()
 		if err != nil {
-			glog.Fatalf("unable to locate home directory: %v", err)
+			glog.Fatalf("unable to locate configuration: no home directory -- %v", err)
 		}
 		opts.ConfigPath = filepath.Join(home, ".config", "gutterd.json")
 	}
