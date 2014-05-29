@@ -7,11 +7,9 @@ package matcher
  */
 
 import (
-    "testing"
+	"testing"
 )
-
 
 func TestMatcher(t *testing.T) {
 
 }
-

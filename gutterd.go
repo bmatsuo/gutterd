@@ -20,13 +20,12 @@ import (
 	"strings"
 
 	"code.google.com/p/go.exp/fsnotify"
-	"github.com/bmatsuo/torrent/bencoding"
-	"github.com/bmatsuo/torrent/metainfo"
-	"github.com/golang/glog"
-
 	"github.com/bmatsuo/gutterd/handler"
 	"github.com/bmatsuo/gutterd/statsd"
 	"github.com/bmatsuo/gutterd/watcher"
+	"github.com/bmatsuo/torrent/bencoding"
+	"github.com/bmatsuo/torrent/metainfo"
+	"github.com/golang/glog"
 )
 
 var (
