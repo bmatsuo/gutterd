@@ -12,7 +12,7 @@ var matchTestMatch = Must(Register(func() Interface {
 	return &MatchTestMock{"test-match", nil}
 }))
 var matchTestNoMatch = Must(Register(func() Interface {
-	return &MatchTestMock{"test-no-match", ErrNoMatch}
+	return &MatchTestMock{"test-no-match", NoMatch}
 }))
 var matchTestError = Must(Register(func() Interface {
 	return &MatchTestMock{"test-error", fmt.Errorf("this is a test error message")}
@@ -63,7 +63,7 @@ func testM(t *testing.T, test MTestJSON) {
 			qual = " (expected error)"
 		}
 		t.Errorf("%s unexpected match%q", test.JSON, qual)
-	case ErrNoMatch:
+	case NoMatch:
 		var qual string
 		switch test.Result {
 		case MTestMatch:

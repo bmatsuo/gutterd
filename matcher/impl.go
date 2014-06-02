@@ -27,13 +27,13 @@ func (m *MatchExt) MatchTorrent(t *metainfo.Metainfo) error {
 		return fmt.Errorf("nil metainfo")
 	}
 	if m.Pattern == nil {
-		return ErrNoMatch
+		return NoMatch
 	}
 	if len(t.Info.Files) == 0 {
 		if m.Pattern.MatchString(filepath.Ext(t.Info.Name)) {
 			return nil
 		}
-		return ErrNoMatch
+		return NoMatch
 	}
 	for _, f := range t.Info.Files {
 		p := f.Path
@@ -42,7 +42,7 @@ func (m *MatchExt) MatchTorrent(t *metainfo.Metainfo) error {
 			return nil
 		}
 	}
-	return ErrNoMatch
+	return NoMatch
 }
 
 type MatchBase struct {
@@ -58,13 +58,13 @@ func (m *MatchBase) MatchTorrent(t *metainfo.Metainfo) error {
 		return fmt.Errorf("nil metainfo")
 	}
 	if m.Pattern == nil {
-		return ErrNoMatch
+		return NoMatch
 	}
 	if len(t.Info.Files) == 0 {
 		if m.Pattern.MatchString(t.Info.Name) {
 			return nil
 		}
-		return ErrNoMatch
+		return NoMatch
 	}
 	for _, f := range t.Info.Files {
 		p := f.Path
@@ -73,7 +73,7 @@ func (m *MatchBase) MatchTorrent(t *metainfo.Metainfo) error {
 			return nil
 		}
 	}
-	return ErrNoMatch
+	return NoMatch
 }
 
 type MatchAnnounce struct {
@@ -89,12 +89,12 @@ func (m *MatchAnnounce) MatchTorrent(t *metainfo.Metainfo) error {
 		return fmt.Errorf("nil metainfo")
 	}
 	if m.Pattern == nil {
-		return ErrNoMatch
+		return NoMatch
 	}
 	if m.Pattern.MatchString(t.Announce) {
 		return nil
 	}
-	return ErrNoMatch
+	return NoMatch
 }
 
 type MatchAll []*M
@@ -178,7 +178,7 @@ func (m MatchAny) MatchTorrent(t *metainfo.Metainfo) error {
 		switch e {
 		case nil:
 			return nil
-		case ErrNoMatch:
+		case NoMatch:
 			break
 		default:
 			err = e
@@ -187,5 +187,5 @@ func (m MatchAny) MatchTorrent(t *metainfo.Metainfo) error {
 	if err != nil {
 		return err
 	}
-	return ErrNoMatch
+	return NoMatch
 }

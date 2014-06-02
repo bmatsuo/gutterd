@@ -158,7 +158,7 @@ func HandlePath(handlers []*handler.Handler, path string) {
 		return
 	}
 	var torrent *metainfo.Metainfo
-	err = bencoding.Unmarshal(&torrent, p)
+	err = bencoding.Unmarshal(p, &torrent)
 	if err != nil {
 		statsd.Incr("torrent.error", 1, 1)
 		glog.Errorf("error reading torrent (%q); %v", path, err)
@@ -168,7 +168,7 @@ func HandlePath(handlers []*handler.Handler, path string) {
 	// Find the first handler matching the supplied torrent.
 	for _, h := range handlers {
 		err := h.Handle(path, torrent)
-		if err == handler.ErrNoMatch {
+		if err == handler.NoMatch {
 			continue
 		}
 		if err != nil {

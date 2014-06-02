@@ -25,7 +25,7 @@ func (err Error) Error() string {
 	return fmt.Sprintf("matcher %q %s", err.name, err.err.Error())
 }
 
-var ErrNoMatch = fmt.Errorf("no match")
+var NoMatch = fmt.Errorf("no match")
 
 type JSONRegexp struct {
 	*regexp.Regexp
@@ -76,7 +76,7 @@ func (m *M) Name() string {
 
 func (m *M) MatchTorrent(t *metainfo.Metainfo) error {
 	if m.m == nil {
-		return fmt.Errorf("no match")
+		return NoMatch
 	}
 	return m.m.MatchTorrent(t)
 }
@@ -149,5 +149,5 @@ func Register(fn func() Interface) (*M, error) {
 		return nil, fmt.Errorf("already registered")
 	}
 	_M.m[name] = fn
-	return &M{name, nil}, nil
+	return &M{name, fn()}, nil
 }

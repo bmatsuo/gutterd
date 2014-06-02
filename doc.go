@@ -38,46 +38,39 @@ Gutterd uses a JSON configuration. Most improtantly, the configuration
 specifies directories to watch for incoming .torrent files, as well as handlers
 to match against and demux those files. Here is an example configuration.
 
-    {
-        "watch": [ "/Users/b/Downloads" ],
-        "pollFrequency": 60,
-        "handlers": [
-            {
-                "name": "ubuntu",
-                "watch": "/Users/b/UbuntuImages",
-                "match": {
-                    "tracker": "torrent[.]ubuntu[.]com",
-                    "ext": "[.]iso"
-                }
+	{
+		"watch": [ "/Users/b/Downloads" ],
+		"pollFrequency": 60,
+		"handlers": [
+			{
+				"name":"ubuntu",
+				"watch":"/Users/b/UbuntuImages",
+				"matcher":{ "match":"announce", "pattern":"torrent[.]ubuntu[.]com" }
             },
             {
-                "name": "arch-net",
-                "watch": "/Users/b/ArchImages/Net",
-				"match": {
-                    "tracker": "tracker[.]archlinux[.]org",
-                    "basename": "netinstall",
-                    "ext": "[.]iso"
-                }
-            },
-            {
-                "name": "arch-core",
-                "watch": "/Users/b/ArchImages/Core",
-                "match": {
-                    "tracker": "tracker[.]archlinux[.]org",
-                    "basename": "core",
-                    "ext": "[.]iso"
-                }
-            },
-            {
-                "name": "unknown",
-                "script": [ "rm {{.Path}}" ]
+				"name": "arch-net",
+				"watch": "/Users/b/ArchImages/Net",
+				"matcher": {
+					"match:"all",
+					"of":[
+					{ "match":"announce", "pattern":"tracker[.]archlinux[.]org" },
+					{ "match":"base", "pattern":"netinstall" },
+					]
+				}
+			},
+			{
+				"name": "unknown",
+				"script": [
+				"echo 'no handler for {{.Path}}'",
+				"rm {{.Path}}"
+				]
             }
         ]
     }
 
 Handlers:
 
-When handler "match" properties are unspecified, they will match any torrent.
+When handler "matcher" properties are unspecified, they will match any torrent.
 Torrents are matched against handlers in order. So, in the example above, the
 'other' handler acts as a catch-all and will match all torrents not matched by
 any other handler.

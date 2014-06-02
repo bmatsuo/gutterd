@@ -10,10 +10,10 @@ import (
 )
 
 type Config struct {
-	Name   string         `json:"name"`             // A name for logging purposes.
-	Watch  string         `json:"watch,omitempty"`  // Matching .torrent file destination.
-	Script []string       `json:"script,omitempty"` // Executed on matched files (should delete the file).
-	Match  matcher.Config `json:"match"`            // Describes .torrent files to handle.
+	Name    string     `json:"name"`             // A name for logging purposes.
+	Watch   string     `json:"watch,omitempty"`  // Matching .torrent file destination.
+	Script  []string   `json:"script,omitempty"` // Executed on matched files (should delete the file).
+	Matcher *matcher.M `json:"match"`            // Describes .torrent files to handle.
 }
 
 func (c Config) Handler() (*Handler, error) {
@@ -21,9 +21,9 @@ func (c Config) Handler() (*Handler, error) {
 	case c.Watch != "" && len(c.Script) > 0:
 		return nil, fmt.Errorf("both watch and script present")
 	case c.Watch != "":
-		return NewWatch(c.Name, c.Match.Matcher(), c.Watch), nil
+		return NewWatch(c.Name, c.Matcher, c.Watch), nil
 	case len(c.Script) > 0:
-		return NewScript(c.Name, c.Match.Matcher(), c.Script...)
+		return NewScript(c.Name, c.Matcher, c.Script...)
 	default:
 		return nil, fmt.Errorf("nother watch no script present")
 	}
@@ -51,10 +51,6 @@ func (hc Config) Validate() error {
 	}
 	if !stat.IsDir() {
 		return fmt.Errorf("watch for handler %q is not a directory: %s", hc.Name, hc.Watch)
-	}
-	err = hc.Match.Validate()
-	if err != nil {
-		return fmt.Errorf("handler %q %v", hc.Name, err)
 	}
 	return nil
 }

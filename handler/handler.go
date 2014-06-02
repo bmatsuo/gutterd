@@ -8,37 +8,37 @@ import (
 	"github.com/bmatsuo/torrent/metainfo"
 )
 
-var ErrNoMatch = fmt.Errorf("no match")
+var NoMatch = fmt.Errorf("no match")
 
 type Interface interface {
 	Name() string
 	Handle(path string, meta *metainfo.Metainfo) error
 }
 
-// A Handler type's only function is to move matching torrents into
-// media-specific client watch directories.
+// A Handler type's only function is to match torrents and add them to torrent
+// clients.
 type Handler struct {
-	name             string   // Unique name for the Handler.
-	exec             Exec     // A way to act on files.
-	watch            string   // Destination for .torrent files (watched by a client).
-	script           []string // Script to run on matched files (should destroy the path).
-	*matcher.Matcher          // Implements matcher.Interface
-	scriptTemplate   *template.Template
+	name              string   // Unique name for the Handler.
+	exec              Exec     // A way to act on files.
+	watch             string   // Destination for .torrent files (watched by a client).
+	script            []string // Script to run on matched files (should destroy the path).
+	matcher.Interface          // Implements matcher.Interface
+	scriptTemplate    *template.Template
 }
 
-func New(name string, m *matcher.Matcher, exec Exec) *Handler {
+func New(name string, m matcher.Interface, exec Exec) *Handler {
 	return &Handler{
-		name:    name,
-		exec:    exec,
-		Matcher: m,
+		name:      name,
+		exec:      exec,
+		Interface: m,
 	}
 }
 
-func NewWatch(name string, m *matcher.Matcher, watch string) *Handler {
+func NewWatch(name string, m matcher.Interface, watch string) *Handler {
 	return New(name, m, WatchDir(watch))
 }
 
-func NewScript(name string, m *matcher.Matcher, script ...string) (*Handler, error) {
+func NewScript(name string, m matcher.Interface, script ...string) (*Handler, error) {
 	st, err := NewScriptTemplate(script...)
 	if err != nil {
 		return nil, err
@@ -51,8 +51,12 @@ func (h *Handler) Name() string {
 }
 
 func (h *Handler) Handle(path string, meta *metainfo.Metainfo) error {
-	if !h.Match(meta) {
-		return ErrNoMatch
+	err := h.MatchTorrent(meta)
+	if err == matcher.NoMatch {
+		return NoMatch
+	}
+	if err != nil {
+		return err
 	}
 	return h.exec.Run(path, meta)
 }
