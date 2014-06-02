@@ -35,7 +35,7 @@ func (r *JSONRegexp) MarshalJSON() ([]byte, error) {
 	return json.Marshal(r.String())
 }
 
-func (r *JSONRegexp) UnarshalJSON(p []byte) error {
+func (r *JSONRegexp) UnmarshalJSON(p []byte) error {
 	var s string
 	err := json.Unmarshal(p, &s)
 	if err != nil {

@@ -2,6 +2,7 @@ package matcher
 
 import (
 	"encoding/json"
+	"fmt"
 	"path/filepath"
 
 	"github.com/bmatsuo/torrent/metainfo"
@@ -22,6 +23,9 @@ func (m *MatchExt) Name() string {
 }
 
 func (m *MatchExt) MatchTorrent(t *metainfo.Metainfo) error {
+	if t == nil {
+		return fmt.Errorf("nil metainfo")
+	}
 	if m.Pattern == nil {
 		return ErrNoMatch
 	}
@@ -50,11 +54,14 @@ func (m *MatchBase) Name() string {
 }
 
 func (m *MatchBase) MatchTorrent(t *metainfo.Metainfo) error {
+	if t == nil {
+		return fmt.Errorf("nil metainfo")
+	}
 	if m.Pattern == nil {
 		return ErrNoMatch
 	}
 	if len(t.Info.Files) == 0 {
-		if m.Pattern.MatchString(filepath.Ext(t.Info.Name)) {
+		if m.Pattern.MatchString(t.Info.Name) {
 			return nil
 		}
 		return ErrNoMatch
@@ -74,14 +81,17 @@ type MatchAnnounce struct {
 }
 
 func (m *MatchAnnounce) Name() string {
-	return "tracker"
+	return "announce"
 }
 
 func (m *MatchAnnounce) MatchTorrent(t *metainfo.Metainfo) error {
+	if t == nil {
+		return fmt.Errorf("nil metainfo")
+	}
 	if m.Pattern == nil {
 		return ErrNoMatch
 	}
-	if m.Pattern.MatchString(filepath.Ext(t.Announce)) {
+	if m.Pattern.MatchString(t.Announce) {
 		return nil
 	}
 	return ErrNoMatch
@@ -97,7 +107,7 @@ func (m MatchAll) Name() string {
 
 func (m *MatchAll) UnmarshalJSON(p []byte) error {
 	_map := make(map[string]*json.RawMessage)
-	err := json.Unmarshal(p, _map)
+	err := json.Unmarshal(p, &_map)
 	if err != nil {
 		return err
 	}
@@ -119,6 +129,10 @@ func (m *MatchAll) MarshalJSON() ([]byte, error) {
 }
 
 func (m MatchAll) MatchTorrent(t *metainfo.Metainfo) error {
+	var names []string
+	for i := range m {
+		names = append(names, m[i].Name())
+	}
 	for i := range m {
 		err := m[i].MatchTorrent(t)
 		if err != nil {
@@ -136,7 +150,7 @@ func (m MatchAny) Name() string {
 
 func (m *MatchAny) UnmarshalJSON(p []byte) error {
 	_map := make(map[string]*json.RawMessage)
-	err := json.Unmarshal(p, _map)
+	err := json.Unmarshal(p, &_map)
 	if err != nil {
 		return err
 	}
@@ -158,15 +172,20 @@ func (m *MatchAny) MarshalJSON() ([]byte, error) {
 }
 
 func (m MatchAny) MatchTorrent(t *metainfo.Metainfo) error {
+	var err error
 	for i := range m {
-		err := m[i].MatchTorrent(t)
-		if err == ErrNoMatch {
-			continue
+		e := m[i].MatchTorrent(t)
+		switch e {
+		case nil:
+			return nil
+		case ErrNoMatch:
+			break
+		default:
+			err = e
 		}
-		if err != nil {
-			return err
-		}
-		return nil
+	}
+	if err != nil {
+		return err
 	}
 	return ErrNoMatch
 }

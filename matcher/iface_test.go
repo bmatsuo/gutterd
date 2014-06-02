@@ -8,14 +8,14 @@ import (
 	"github.com/bmatsuo/torrent/metainfo"
 )
 
-var matchTestOK = Must(Register(func() Interface {
-	return &MatchTestMock{"test-ok", nil}
+var matchTestMatch = Must(Register(func() Interface {
+	return &MatchTestMock{"test-match", nil}
 }))
 var matchTestNoMatch = Must(Register(func() Interface {
 	return &MatchTestMock{"test-no-match", ErrNoMatch}
 }))
-var matchTestErr = Must(Register(func() Interface {
-	return &MatchTestMock{"test-err", fmt.Errorf("this is a test error message")}
+var matchTestError = Must(Register(func() Interface {
+	return &MatchTestMock{"test-error", fmt.Errorf("this is a test error message")}
 }))
 
 type MatchTestMock struct {
@@ -90,9 +90,9 @@ func testM(t *testing.T, test MTestJSON) {
 
 func TestM(t *testing.T) {
 	for _, test := range []MTestJSON{
-		{`{"match":"test-ok"}`, nil, MTestMatch},
+		{`{"match":"test-match"}`, nil, MTestMatch},
 		{`{"match":"test-no-match"}`, nil, MTestNoMatch},
-		{`{"match":"test-err"}`, nil, MTestError},
+		{`{"match":"test-error"}`, nil, MTestError},
 	} {
 		testM(t, test)
 	}
