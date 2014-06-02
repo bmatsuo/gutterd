@@ -13,7 +13,7 @@ type Config struct {
 	Name    string     `json:"name"`             // A name for logging purposes.
 	Watch   string     `json:"watch,omitempty"`  // Matching .torrent file destination.
 	Script  []string   `json:"script,omitempty"` // Executed on matched files (should delete the file).
-	Matcher *matcher.M `json:"match"`            // Describes .torrent files to handle.
+	Matcher *matcher.M `json:"matcher"`          // Describes .torrent files to handle.
 }
 
 func (c Config) Handler() (*Handler, error) {
@@ -25,7 +25,7 @@ func (c Config) Handler() (*Handler, error) {
 	case len(c.Script) > 0:
 		return NewScript(c.Name, c.Matcher, c.Script...)
 	default:
-		return nil, fmt.Errorf("nother watch no script present")
+		return nil, fmt.Errorf("neither watch no script present")
 	}
 }
 
