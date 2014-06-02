@@ -34,10 +34,10 @@ func (hc Config) Validate() error {
 		return errors.New("nameless handler")
 	}
 	if hc.Watch == "" && len(hc.Script) == 0 {
-		return fmt.Errorf("either watch or script must be provided for handler %q", hc.Name)
+		return fmt.Errorf("neither watch nor script provided for %q", hc.Name)
 	}
 	if hc.Watch != "" && len(hc.Script) == 0 {
-		return fmt.Errorf("script and watch may not both be provided for %q", hc.Name)
+		return fmt.Errorf("both script and watch provided for %q", hc.Name)
 	}
 	for i := range hc.Script {
 		_, err := template.New("").Parse(hc.Script[i])
@@ -45,12 +45,14 @@ func (hc Config) Validate() error {
 			return fmt.Errorf("script %d for %q is invalid: %v", err)
 		}
 	}
-	stat, err := os.Stat(hc.Watch)
-	if err != nil {
-		return err
-	}
-	if !stat.IsDir() {
-		return fmt.Errorf("watch for handler %q is not a directory: %s", hc.Name, hc.Watch)
+	if hc.Watch != "" {
+		stat, err := os.Stat(hc.Watch)
+		if err != nil {
+			return err
+		}
+		if !stat.IsDir() {
+			return fmt.Errorf("watch for %q is not a directory: %s", hc.Name, hc.Watch)
+		}
 	}
 	return nil
 }
