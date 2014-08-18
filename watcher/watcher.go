@@ -1,7 +1,7 @@
 package watcher
 
 import (
-	"code.google.com/p/go.exp/fsnotify"
+	"gopkg.in/fsnotify.v0"
 )
 
 type Watcher struct {
