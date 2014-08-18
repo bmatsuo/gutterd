@@ -17,8 +17,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"code.google.com/p/go.exp/fsnotify"
 	"github.com/golang/glog"
+	"gopkg.in/fsnotify.v0"
 
 	"github.com/bmatsuo/gutterd/handler"
 	"github.com/bmatsuo/gutterd/metadata"
