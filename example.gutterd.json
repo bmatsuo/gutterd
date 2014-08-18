@@ -30,6 +30,7 @@
         },
         {
             "name": "unknown",
+            "watch": "/Users/b/Other",
             "script": [ "rm {{.Path}}" ]
         }
     ]

@@ -28,54 +28,11 @@ For help with command line options.
 Configuration
 -------------
 
-Gutterd uses a JSON configuration stored in `~/.config/gutterd.json`
-The configuration specifies directories to watch for incoming torrents,
-as well as the handlers to match against those torrents. Here is an
-example configuration.
-
-    {
-        "http": ":6060",
-        "logs": [
-            {
-                "path": "&2",
-                "accepts": [ "gutterd", "http" ]
-            }
-        ],
-        "watch": [ "/Users/b/Downloads" ],
-        "pollFrequency": 60,
-        "handlers": [
-            {
-                "name": "ubuntu",
-                "watch": "/Users/b/UbuntuImages",
-                "match": {
-                    "tracker": "torrent[.]ubuntu[.]com",
-                    "ext": "[.]iso"
-                }
-            },
-            {
-                "name": "arch-net",
-                "watch": "/Users/b/ArchImages/Net",
-                "match": {
-                    "tracker": "tracker[.]archlinux[.]org",
-                    "basename": "netinstall",
-                    "ext": "[.]iso"
-                }
-            },
-            {
-                "name": "arch-core",
-                "watch": "/Users/b/ArchImages/Core",
-                "match": {
-                    "tracker": "tracker[.]archlinux[.]org",
-                    "basename": "core",
-                    "ext": "[.]iso"
-                }
-            },
-            {
-                "name": "other",
-                "watch": "/Users/b/DL"
-            }
-        ]
-    }
+Gutterd uses a JSON configuration stored in `~/.config/gutterd.json` The
+configuration specifies directories to watch for incoming torrents, as well as
+the handlers to match those torrents against. There is an [example
+configuration](https://github.com/bmatsuo/gutterd/tree/master/example.gutterd.json)
+to get you started.
 
 Handlers
 --------
