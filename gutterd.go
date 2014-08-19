@@ -60,7 +60,7 @@ func handleFile(path string) {
 			)
 			mvpath := filepath.Join(handler.Watch, filepath.Base(path))
 			if err := os.Rename(path, mvpath); err != nil {
-				glog.Error("watch import failed (%q); %v", torrent.Info.Name, err)
+				glog.Errorf("watch import failed (%q); %v", torrent.Info.Name, err)
 			}
 			return
 		}
@@ -133,8 +133,7 @@ func main() {
 	statsd.Incr("proc.boot", 1, 1)
 
 	if err := fsInit(); err != nil {
-		glog.Error("error initializing file system watcher; %v", err)
-		os.Exit(1)
+		glog.Fatalf("error initializing file system watcher; %v", err)
 	}
 	for event := range fs.Event {
 		statsd.Incr("torrents.matches", 1, 1)
